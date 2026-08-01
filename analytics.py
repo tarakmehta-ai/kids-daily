@@ -43,12 +43,14 @@ EVENT_TYPES = {
     "conn_result", "link_click", "age_switch",
 }
 SECTIONS = {
-    "s-news", "s-sports", "s-word", "s-brain", "s-wordle",
-    "s-conn", "s-history", "s-joke", "s-story",
+    "s-news", "s-sports", "s-local", "s-word", "s-brain", "s-wordle",
+    "s-conn", "s-history", "s-joke", "s-story", "s-feedback",
 }
 SECTION_LABELS = {
     "s-news": "Today's News",
     "s-sports": "Sports",
+    "s-local": "Around West Windsor",
+    "s-feedback": "Feedback",
     "s-word": "Word of the Day",
     "s-brain": "Brain Teasers",
     "s-wordle": "Guess the Word",

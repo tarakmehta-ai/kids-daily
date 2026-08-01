@@ -163,6 +163,21 @@
     show("eagles");
   }
 
+  // ---------- local news ----------
+  function renderLocal() {
+    var box = $("#local");
+    box.innerHTML = "";
+    var items = DATA.westwindsor || [];
+    if (!items.length) {
+      // Genuinely the normal case. Small-town feeds are mostly police blotter
+      // and council business, none of which passes the filter.
+      box.appendChild(el("p", "empty",
+        "Nothing from around town today. Local news is mostly grown-up stuff, so this one is often quiet."));
+      return;
+    }
+    items.forEach(function (i) { box.appendChild(newsCard(i, false)); });
+  }
+
   // ---------- word of the day ----------
   function renderWord() {
     var w = DATA.word_of_day || {};
@@ -673,6 +688,7 @@
     $("#loading").style.display = "none";
     renderNews();
     renderSports();
+    renderLocal();
     renderWord();
     renderPuzzles();
     renderWordle();

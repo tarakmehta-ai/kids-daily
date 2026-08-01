@@ -113,6 +113,34 @@ The free plan allows 750 instance hours per month; a ~15-hour daily window is
 around 465, so there's plenty of margin. (Pinging 24/7 would burn ~744 and any
 redeploy could tip you into suspension — don't.)
 
+## 5b. When the page changes over
+
+`DAY_ROLLOVER_HOUR` controls the moment the next day's page goes live.
+
+| Value | Effect |
+|---|---|
+| `20` | **current setting** — new page appears at 8pm local time |
+| `0` or unset | normal midnight rollover |
+
+At 8pm the kids get an entirely fresh page: new puzzles, Wordle, joke, news,
+and the header date reads tomorrow. It then stays put until 8pm the next
+evening, so nothing shifts under them mid-morning.
+
+You don't need a separate cron job for this — the 10-minute keep-alive ping
+hits `/health` at 8:00pm, which triggers the build automatically.
+
+`SITE_TZ` is `America/New_York`, so this tracks the local clock through the
+EDT/EST switch. It's 8pm all year, not 8pm EST drifting to 7pm.
+
+`/health` reports `day_rollover_hour` and `server_time` so you can confirm it.
+
+**Cost note:** without the storage in step 6, the overnight sleep wipes the
+cache, so the page gets built at 8pm *and* again on the morning's first ping —
+roughly 4¢/day instead of 2¢. Trivial either way, but it's one more reason to
+do step 6.
+
+---
+
 ## 6. Storage — now required, because of stats
 
 **I told you to skip this earlier. Adding tracking changes that.**

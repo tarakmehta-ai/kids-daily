@@ -197,11 +197,17 @@ WORLD/KIDS NEWS:
 PHILADELPHIA EAGLES:
 {_feed_blob(feeds.get("eagles", []))}
 
+NFL (LEAGUE-WIDE):
+{_feed_blob(feeds.get("nfl", []))}
+
 TENNIS:
 {_feed_blob(feeds.get("tennis", []))}
 
 INDIAN CRICKET:
 {_feed_blob(feeds.get("cricket", []))}
+
+WEST WINDSOR / PLAINSBORO, NEW JERSEY (LOCAL):
+{_feed_blob(feeds.get("westwindsor", []))}
 
 FEEL-GOOD / KINDNESS STORIES:
 {_feed_blob(feeds.get("feelgood", []))}
@@ -214,8 +220,10 @@ Return exactly this JSON:
     {{"headline": "rewritten for a kid", "summary": "3-4 sentences explaining what happened AND why it matters, in plain language", "link": "the original url", "source": "publication name", "talk_about_it": "one question to ask at the dinner table"}}
   ],
   "eagles":  [{{"headline": "...", "summary": "2-3 sentences", "link": "...", "source": "..."}}],
+  "nfl":     [{{"headline": "...", "summary": "2-3 sentences", "link": "...", "source": "..."}}],
   "tennis":  [{{"headline": "...", "summary": "2-3 sentences", "link": "...", "source": "..."}}],
   "cricket": [{{"headline": "...", "summary": "2-3 sentences", "link": "...", "source": "..."}}],
+  "westwindsor": [{{"headline": "...", "summary": "2-3 sentences", "link": "...", "source": "..."}}],
   "feelgood": {{
     "title": "...",
     "story": "4-6 short paragraphs, told like a Reader's Digest piece - real people, real events, warm and specific",
@@ -226,7 +234,27 @@ Return exactly this JSON:
 }}
 
 Rules:
-- 3 items for kids_news, 2 each for eagles/tennis/cricket.
+- 3 items for kids_news, 2 each for eagles/nfl/tennis/cricket, up to 2 for westwindsor.
+- nfl = league-wide news, NOT the Eagles. If a story is only about the Eagles it
+  belongs in "eagles" and must not be repeated in "nfl". Prefer results, trades,
+  records, rule changes and genuinely interesting league stories.
+- westwindsor is LOCAL news for West Windsor Township and Plainsboro, New
+  Jersey, written for children who live there. This section has a much higher
+  bar than the others:
+    * INCLUDE only: school and school-district news, student achievements,
+      library and park events, community festivals and fairs, local youth
+      sport, volunteering and fundraising, new facilities opening, local
+      nature and wildlife.
+    * EXCLUDE ENTIRELY, with no exceptions: police and crime of any kind,
+      courts, lawsuits, arrests, fires, road accidents, missing persons,
+      council budgets, zoning and development disputes, tax rates, elections
+      and political argument, property prices, obituaries, illness.
+    * Small-town news feeds are mostly police blotter and municipal business.
+      Expect to return an EMPTY list on many days. An empty westwindsor list is
+      the correct, expected answer far more often than not - never pad it, and
+      never soften a crime story to make it fit.
+    * If an item merely mentions a school but is really about a crime, a
+      lawsuit or a budget fight, it does NOT belong here.
 - Only use stories present in the headlines above or found via web search. Do
   not invent a story, a score, a result, or a quote. Keep the real link.
 - Sports: explain the result plainly. Assume they know the sport but not the

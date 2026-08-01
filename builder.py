@@ -19,7 +19,7 @@ import json
 import logging
 import os
 import threading
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -51,8 +51,27 @@ DROPPED: dict[str, int] = {}
 _LOCK = threading.Lock()
 
 
+# Hour (0-23, local time) at which the site starts serving the NEXT day's page.
+# 0 = normal midnight rollover. 20 = the new page appears at 8pm, so the kids
+# get fresh content in the evening and it stays put until 8pm the next night.
+#
+# This shifts the content day only. Analytics stay on calendar days, so the
+# evening summary still reports "what happened today" in the ordinary sense.
+def _rollover_hour() -> int:
+    try:
+        h = int(os.environ.get("DAY_ROLLOVER_HOUR", "0") or 0)
+    except ValueError:
+        return 0
+    return h if 0 <= h <= 23 else 0
+
+
 def today() -> date:
-    return datetime.now(TZ).date()
+    """The date whose page should currently be showing."""
+    now = datetime.now(TZ)
+    hour = _rollover_hour()
+    if hour and now.hour >= hour:
+        return (now + timedelta(days=1)).date()
+    return now.date()
 
 
 # --------------------------------------------------------------------------
@@ -180,16 +199,22 @@ def _merge_news(day: date, generated: dict | None) -> tuple[dict, list[str]]:
     used_bank: list[str] = []
     out: dict[str, Any] = {}
 
-    for key in ("kids_news", "eagles", "tennis", "cricket"):
+    for key in ("kids_news", "eagles", "nfl", "tennis", "cricket", "westwindsor"):
         items = (generated or {}).get(key)
         if isinstance(items, list):
-            is_sport = key in ("eagles", "tennis", "cricket")
+            is_sport = key in ("eagles", "nfl", "tennis", "cricket")
             clean = []
             for i in items:
                 if not (isinstance(i, dict) and i.get("headline")):
                     continue
                 blob = safety.text_of(i, "headline", "summary", "talk_about_it", "source")
-                if not safety.is_safe(blob, sports=is_sport):
+                # Local goes through the stricter topical gate a second time,
+                # because the model can introduce detail the raw headline
+                # didn't have.
+                if key == "westwindsor":
+                    if not safety.is_local_safe(blob):
+                        continue
+                elif not safety.is_safe(blob, sports=is_sport):
                     continue
                 # A link that fails screening is removed, but the story stays -
                 # the summary on the page is the point, not the click-through.
@@ -232,7 +257,10 @@ def build(day: date) -> dict:
     feeds = {}
     for key, items in raw_feeds.items():
         kept = safety.filter_items(
-            items, sports=key in ("eagles", "tennis", "cricket"), limit=6
+            items,
+            sports=key in ("eagles", "nfl", "tennis", "cricket"),
+            local=key == "westwindsor",
+            limit=6,
         )
         DROPPED["feed_" + key] = len(items) - len(kept)
         feeds[key] = kept

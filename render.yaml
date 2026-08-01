@@ -33,6 +33,10 @@ services:
         sync: false
       - key: SITE_TZ
         value: America/New_York
+      # Hour (local time) at which the next day's page goes live.
+      # 20 = the new page appears at 8pm. 0 = normal midnight rollover.
+      - key: DAY_ROLLOVER_HOUR
+        value: "20"
       - key: LINKS_MODE
         value: allowlist
       - key: CACHE_DIR

@@ -43,6 +43,20 @@ STEMS = [
     "rape", "rapist", "molest", "pedophile", "paedophile", "incest",
     "traffick", "grooming", "abduct", "kidnap", "assault", "abuse", "abuser",
     "predator", "stalker", "arson", "arsonist", "extortion",
+    # civic / police-blotter crime. Local news is largely this, and none of it
+    # belongs on a 9-year-old's page.
+    "arrest", "burglar", "burglary", "robbery", "robber", "larceny",
+    "vandalism", "vandalise", "vandalize", "fraud", "embezzle", "indict",
+    "felony", "misdemeanor", "arraign", "manhunt", "swatting", "trespass",
+    "molestation", "solicitation", "prostitution", "carjack", "shoplift",
+    "lawsuit", "litigation", "convict", "conviction", "acquit", "acquittal",
+    "subpoena", "deposition", "settlement", "allegation", "allege",
+    # serious illness and injury. Not "inappropriate" exactly, but a story
+    # about a player's terminal diagnosis is not what a 9-year-old should meet
+    # in the sports section on a summer morning.
+    "cancer", "tumour", "tumor", "leukemia", "leukaemia", "hospice",
+    "terminal illness", "dementia", "alzheimer", "paralysed", "paralyzed",
+    "diagnosis", "diagnosed", "amputate", "life support", "coma",
     # self-harm
     "suicide", "suicidal", "selfharm", "overdose", "anorexia", "bulimia",
     # substances
@@ -94,6 +108,17 @@ PHRASES = [
     "drug bust", "drug ring", "drug cartel", "drug lord", "drink driving",
     "drunk driving", "human trafficking", "sex trafficking",
     "graphic footage", "graphic images", "disturbing footage", "viewer discretion",
+    # local / police blotter phrasing
+    "police say", "police said", "police charged", "police report",
+    "shots fired", "hit and run", "hit-and-run", "bomb threat",
+    "school lockdown", "lockdown", "missing person", "sex crimes",
+    "child endangerment", "drunk driver", "dui", "dwi", "under the influence",
+    "found guilty", "pleaded guilty", "plea deal", "grand jury",
+    "restraining order", "harassment", "hazmat", "evacuated", "evacuation",
+    "state of emergency", "fatal crash", "serious injuries", "critical condition",
+    "life-threatening", "life threatening",
+    "brain disease", "chronic traumatic", "head trauma", "traumatic brain",
+    "als", "cte", "on life support", "intensive care",
     "explosion", "explosions", "explosive device", "car bomb", "suicide bomb",
     "standoff", "stand-off", "shooting spree", "killing spree",
     "dying", "dead body", "murdering", "raping", "beheads", "abducted",
@@ -156,8 +181,14 @@ _WORD_RE = re.compile(
     r"(?<![a-z0-9])(" + "|".join(sorted(map(re.escape, _ALL_FORMS), key=len, reverse=True)) + r")(?![a-z0-9])",
     re.I,
 )
+# Word boundaries matter here. Without them a short phrase like "als" or "cte"
+# matches inside "medals" and "convicted", which silently nukes ordinary
+# sports headlines. Found exactly that way in testing.
 _PHRASE_RE = re.compile(
-    "|".join(sorted((re.escape(p) for p in PHRASES), key=len, reverse=True)), re.I
+    r"(?<![a-z0-9])(" +
+    "|".join(sorted((re.escape(p) for p in PHRASES), key=len, reverse=True)) +
+    r")(?![a-z0-9])",
+    re.I,
 )
 
 
@@ -200,8 +231,11 @@ _SOFT_PHRASES = {
     "body found", "bodies found", "shot dead",
 }
 _HARD_PHRASE_RE = re.compile(
+    r"(?<![a-z0-9])(" +
     "|".join(sorted((re.escape(p) for p in PHRASES if p not in _SOFT_PHRASES),
-                    key=len, reverse=True)), re.I
+                    key=len, reverse=True)) +
+    r")(?![a-z0-9])",
+    re.I,
 )
 
 
@@ -256,7 +290,9 @@ ALLOWED_LINK_DOMAINS = {
     # --- the four Tarak asked for explicitly ---
     "bbc.co.uk", "bbc.com",
     "espn.com",
-    "espncricinfo.com",
+    # ESPNcricinfo's RSS items link to cricinfo.com, NOT espncricinfo.com.
+    # Without both, every cricket story silently lost its link.
+    "espncricinfo.com", "cricinfo.com",
     "bleedinggreennation.com",
     # --- other vetted outlets, kept for breadth. Delete any you don't want;
     #     nothing else in the code depends on this list. ---
@@ -272,6 +308,9 @@ ALLOWED_LINK_DOMAINS = {
     "wtatennis.com", "itftennis.com", "wimbledon.com", "usopen.org",
     "cricbuzz.com", "icc-cricket.com", "bcci.tv",
     "olympics.com", "mlb.com", "nba.com",
+    # local news for West Windsor / Mercer County NJ
+    "planetprinceton.com", "patch.com", "tapinto.net", "communitynews.org",
+    "nj.com", "njspotlightnews.org", "centraljersey.com",
     # news.google.com is deliberately absent - it is a redirect to a publisher
     # we have not vetted. See GOOGLE_REDIRECT below.
 }
@@ -318,13 +357,62 @@ def safe_url(url: str, *, mode: str = "allowlist") -> str:
 # helpers used by the builder
 # ---------------------------------------------------------------------------
 
-def filter_items(items: list[dict], *, sports: bool = False, limit: int = 4) -> list[dict]:
+# ---------------------------------------------------------------------------
+# local news needs a second gate
+# ---------------------------------------------------------------------------
+# A blocklist asks "does this contain something bad?" For a small-town feed
+# that is not enough: local news is largely police blotter, zoning disputes and
+# court reports, and plenty of it is unsuitable without tripping any keyword
+# ("Man, 34, charged following incident on Route 571").
+#
+# So local items must ALSO look positively like something a child would care
+# about. This is an allowlist, not a blocklist, and it is intentionally strict.
+# An empty local section is a perfectly good outcome; a police report is not.
+
+LOCAL_TOPICS = [
+    # school and learning
+    "school", "student", "teacher", "classroom", "district", "high school",
+    "middle school", "elementary", "graduation", "science fair", "spelling bee",
+    "robotics", "debate team", "scholarship", "library", "reading",
+    # community life
+    "festival", "fair", "parade", "concert", "museum", "exhibit", "farmers market",
+    "volunteer", "fundraiser", "food drive", "donation", "charity", "scouts",
+    "community day", "block party", "celebration", "anniversary", "opening",
+    "ribbon cutting", "grand opening",
+    # outdoors and places
+    "park", "playground", "trail", "pool", "garden", "nature", "wildlife",
+    "farm", "lake", "bike", "cleanup", "clean-up", "tree planting", "recycling",
+    # sport and activity
+    "team", "tournament", "championship", "league", "coach", "swim", "soccer",
+    "baseball", "basketball", "track", "cross country", "little league",
+    # good news
+    "award", "honored", "honoured", "wins", "won", "record", "celebrates",
+    "milestone", "new playground", "camp", "summer camp", "art show",
+]
+_LOCAL_RE = re.compile(
+    r"(?<![a-z])(" + "|".join(re.escape(t) for t in LOCAL_TOPICS) + r")", re.I
+)
+
+
+def is_local_safe(text: str) -> bool:
+    """Local items must clear the blocklist AND look like community news."""
+    if not is_safe(text):
+        return False
+    return _LOCAL_RE.search(_normalise(text)) is not None
+
+
+def filter_items(
+    items: list[dict], *, sports: bool = False, limit: int = 4, local: bool = False
+) -> list[dict]:
     """Drop unsafe headlines, de-duplicate, cap the count."""
     out: list[dict] = []
     seen: set[str] = set()
     for item in items:
         blob = f"{item.get('title', '')} {item.get('summary', '')}"
-        if not is_safe(blob, sports=sports):
+        if local:
+            if not is_local_safe(blob):
+                continue
+        elif not is_safe(blob, sports=sports):
             continue
         key = re.sub(r"[^a-z0-9]+", "", item.get("title", "").lower())[:60]
         if not key or key in seen:

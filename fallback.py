@@ -303,7 +303,9 @@ def news_bank(day: date) -> dict:
     return {
         "kids_news": [],
         "eagles": [],
+        "nfl": [],
         "tennis": [],
         "cricket": [],
+        "westwindsor": [],
         "feelgood": FEELGOOD[_idx(day, len(FEELGOOD), 6)],
     }

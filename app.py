@@ -20,7 +20,7 @@ import logging
 import os
 import secrets
 import threading
-from datetime import date
+from datetime import date, datetime
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
@@ -106,6 +106,8 @@ def health():
         "generated_at": payload.get("generated_at"),
         "api_key_present": bool(os.environ.get("ANTHROPIC_API_KEY")),
         "model": os.environ.get("CLAUDE_MODEL", "claude-sonnet-5"),
+        "day_rollover_hour": builder._rollover_hour(),
+        "server_time": datetime.now(builder.TZ).isoformat(),
         "hub_cache": bool(
             os.environ.get("CACHE_DATASET_REPO") and os.environ.get("HF_TOKEN")
         ),

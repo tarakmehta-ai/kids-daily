@@ -133,12 +133,33 @@ FEEDS: dict[str, list[str]] = {
         google_news("Philadelphia Eagles"),
     ],
     "tennis": [
+        # BBC Sport first: links land on bbc.co.uk, which is allowlisted, and
+        # the feed is reliably reachable. ESPN's tennis feed went stale and did
+        # not respond from Render on the first live run, so it sits behind.
+        "https://feeds.bbci.co.uk/sport/tennis/rss.xml",
         "https://www.espn.com/espn/rss/tennis/news",
         google_news("tennis ATP WTA"),
     ],
     "cricket": [
         "https://www.espncricinfo.com/rss/content/story/feeds/6.xml",
         google_news("India cricket team", hl="en-IN", gl="IN", ceid="IN:en"),
+    ],
+    "nfl": [
+        # ESPN first for US-centric, current coverage. BBC second because its
+        # links are allowlisted and BBC feeds are reliably reachable from
+        # Render. Google News last (its links get stripped).
+        "https://www.espn.com/espn/rss/nfl/news",
+        "https://feeds.bbci.co.uk/sport/american-football/rss.xml",
+        google_news("NFL football"),
+    ],
+    "westwindsor": [
+        # Local news for West Windsor Township, Mercer County NJ. None of these
+        # could be verified from the build environment, so the chain is long
+        # and /health will report which one actually answered.
+        "https://planetprinceton.com/feed/",
+        "https://patch.com/new-jersey/westwindsor/rss",
+        "https://www.tapinto.net/towns/west-windsor/rss",
+        google_news('"West Windsor" OR "Plainsboro" New Jersey'),
     ],
     "feelgood": [
         google_news("heartwarming kindness good news"),

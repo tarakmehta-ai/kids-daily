@@ -11,7 +11,8 @@ Spaces now requires a paid plan for anything that runs compute.
 | Section | Where it comes from |
 |---|---|
 | Today's news | BBC Newsround RSS, rewritten for kids by Claude |
-| Sports: Eagles / tennis / Indian cricket | Google News RSS per topic, rewritten by Claude |
+| Sports: Eagles / NFL / tennis / Indian cricket | Publisher RSS per topic (BGN, BBC Sport, ESPNcricinfo), rewritten by Claude |
+| Around West Windsor | Local NJ feeds, filtered hard (see below) |
 | Word of the day | Claude |
 | Math + logic puzzles | Claude, at two difficulty levels (age 9 / age 11 toggle) |
 | Guess the Word | Our own Wordle-style game, kid-level daily word |
@@ -23,7 +24,16 @@ Spaces now requires a paid plan for anything that runs compute.
 
 ## How the daily refresh works
 
-The first visit of each day (US Eastern) triggers a build: fetch the feeds,
+**Set to roll over at 8pm** (`DAY_ROLLOVER_HOUR=20`): at 8pm local time the site
+starts serving the *next* day's page — new puzzles, new Wordle, new joke, new
+news — and the date in the header reads tomorrow. It stays on that page until
+8pm the following evening, so nothing changes under the kids overnight or
+during the day.
+
+This shifts the **content** day only. Analytics stay on calendar days, so the
+evening summary still means "what happened today" in the ordinary sense.
+
+The first visit of each content day triggers a build: fetch the feeds,
 filter them for age-appropriateness, then two Claude calls — one for the
 creative content, one to turn real headlines into kid-readable summaries. The
 result is cached, so every later visit that day is instant and free.
@@ -61,6 +71,7 @@ Set these in your host's environment settings (Render → Environment):
 | `STATS_DATASET_REPO` | variable | no | HF dataset for the engagement log. **Required for stats to survive a restart** |
 | `ANALYTICS` | variable | no | `on` by default; set `off` to disable tracking |
 | `SITE_TZ` | variable | no | Defaults to `America/New_York` |
+| `DAY_ROLLOVER_HOUR` | variable | no | Hour (0-23, local) when the next day's page goes live. `20` = 8pm. `0`/unset = midnight |
 | `CLAUDE_MODEL` | variable | no | Defaults to `claude-sonnet-5` |
 | `LINKS_MODE` | variable | no | `allowlist` (default), `off`, or `all` — see below |
 
@@ -93,6 +104,23 @@ newsroom like the BBC. The reporting is solid and its headlines pass through
 exactly the same safety filter as every other source, but fan-blog articles
 carry comment threads, and comment threads are not moderated to a 9-year-old's
 standard. The filter cannot see them. Worth knowing before they click through.
+
+## The local news section
+
+`westwindsor` is the strictest section on the site. Small-town feeds are mostly
+police blotter, courts, zoning and budgets, so a blocklist alone is not enough —
+plenty of unsuitable local news trips no keyword at all ("Man, 34, charged
+following incident on Route 571").
+
+Local items therefore have to pass a **second, positive gate**
+(`safety.is_local_safe`): as well as clearing the blocklist, the text must match
+`safety.LOCAL_TOPICS` — schools, students, library, parks, festivals, youth
+sport, volunteering, awards. Anything that doesn't look positively like
+community news is dropped.
+
+**An empty local section is the expected outcome most days**, and the page says
+so in plain language rather than looking broken. That is the design. If you'd
+rather see more there, widen `LOCAL_TOPICS` — do not weaken the blocklist.
 
 ## Feedback
 

@@ -40,6 +40,7 @@
   --brand-tint: #e9f1fc;
 
   --eagles: #00614f;
+  --nfl: #4a4f57;
   --tennis: #b7791f;
   --cricket: #1668b3;
   --sun: #f3a712;
@@ -289,6 +290,7 @@ a { color: var(--brand); }
 .tab:hover { border-color: var(--ink-3); color: var(--ink); }
 .tab[aria-selected="true"] { color: #fff; border-color: transparent; box-shadow: var(--sh-1); }
 .tab[data-team="eagles"][aria-selected="true"]  { background: var(--eagles); }
+.tab[data-team="nfl"][aria-selected="true"]     { background: var(--nfl); }
 .tab[data-team="tennis"][aria-selected="true"]  { background: var(--tennis); }
 .tab[data-team="cricket"][aria-selected="true"] { background: var(--cricket); }
 
@@ -458,6 +460,12 @@ a { color: var(--brand); }
 }
 
 /* ======================= on this day ======================= */
+#local .card {
+  background:
+    radial-gradient(120% 130% at 100% 0%, #eefaf1 0%, rgba(238, 250, 241, 0) 55%),
+    var(--card);
+}
+
 #history .card {
   background:
     radial-gradient(120% 130% at 0% 0%, #eef3fd 0%, rgba(238, 243, 253, 0) 52%),
