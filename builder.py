@@ -199,6 +199,13 @@ def _merge_news(day: date, generated: dict | None) -> tuple[dict, list[str]]:
     used_bank: list[str] = []
     out: dict[str, Any] = {}
 
+    # Sections allowed to be empty without it meaning anything is wrong.
+    # westwindsor is empty most days BY DESIGN - the local topical gate is
+    # strict on purpose. Reporting that as "degraded" every single day would
+    # train you to ignore the health signal, which defeats its whole point.
+    OPTIONAL = {"westwindsor"}
+    empty: list[str] = []
+
     for key in ("kids_news", "eagles", "nfl", "tennis", "cricket", "westwindsor"):
         items = (generated or {}).get(key)
         if isinstance(items, list):
@@ -225,7 +232,10 @@ def _merge_news(day: date, generated: dict | None) -> tuple[dict, list[str]]:
         else:
             out[key] = []
         if not out[key]:
-            used_bank.append(key)
+            empty.append(key)
+            # Only a non-optional empty section counts as something going wrong.
+            if key not in OPTIONAL:
+                used_bank.append(key)
 
     fg = (generated or {}).get("feelgood")
     if (
@@ -240,6 +250,7 @@ def _merge_news(day: date, generated: dict | None) -> tuple[dict, list[str]]:
     else:
         out["feelgood"] = bank["feelgood"]
         used_bank.append("feelgood")
+    out["_empty_sections"] = empty
     return out, used_bank
 
 
@@ -274,6 +285,7 @@ def build(day: date) -> dict:
 
     creative, bank_creative = _merge_creative(day, creative_raw)
     news, bank_news = _merge_news(day, news_raw)
+    empty_sections = news.pop("_empty_sections", [])
 
     payload = {
         "date": day.isoformat(),
@@ -285,6 +297,7 @@ def build(day: date) -> dict:
             "sources": dict(sources.SOURCE_LOG),
             "llm": dict(llm.LLM_LOG),
             "fell_back_to_bank": sorted(set(bank_creative + bank_news)),
+            "empty_sections": empty_sections,
             "blocked_by_filter": {k: v for k, v in DROPPED.items() if v},
             "links_mode": LINKS_MODE,
         },

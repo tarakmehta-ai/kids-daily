@@ -112,6 +112,9 @@ def health():
             os.environ.get("CACHE_DATASET_REPO") and os.environ.get("HF_TOKEN")
         ),
         "sections_using_offline_bank": fell_back,
+        # Empty but expected - notably westwindsor, which is empty most days
+        # because the local topical gate is deliberately strict.
+        "empty_sections": diag.get("empty_sections", []),
         "links_mode": diag.get("links_mode"),
         "blocked_by_filter": diag.get("blocked_by_filter", {}),
         "sources": diag.get("sources", {}),
