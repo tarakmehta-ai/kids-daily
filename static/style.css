@@ -1,0 +1,609 @@
+/* ===========================================================================
+   Kids Daily
+   ---------------------------------------------------------------------------
+   HERO IMAGE
+   Currently: a family photo taken on Mount Titlis, looking down over Trubsee
+   lake, with the cable car station on the right.
+
+   To swap it for a different photo, replace static/hero.jpg (wide landscape,
+   2000px+) and regenerate the small backdrop copy:
+
+     python3 -c "from PIL import Image, ImageFilter as F; \
+       i=Image.open('static/hero.jpg').convert('RGB'); \
+       i.resize((480,round(480*i.height/i.width))).filter(F.GaussianBlur(18)) \
+        .save('static/hero-blur.jpg',quality=68,optimize=True)"
+
+   Then check --hero-y below: it decides which horizontal band of the photo
+   survives the crop. The illustrated fallback is still in static/hero.svg.
+   =========================================================================== */
+
+:root {
+  --hero: url("/static/hero.jpg");
+  /* Small pre-blurred copy for the page backdrop. Blurring a 2000px image live
+     costs real frames on a phone; blurring a 480px one costs nothing. */
+  --hero-blur: url("/static/hero-blur.jpg");
+  /* Vertical focal point of the hero crop. 42% keeps the peaks and the lake
+     in frame; lower shows more sky, higher shows more of the valley floor. */
+  --hero-y: 42%;
+
+  --ink: #16202e;
+  --ink-2: #3d4a5c;
+  --ink-3: #6b7889;
+  --line: #e3e8ef;
+  --line-2: #eef2f7;
+
+  --card: #ffffff;
+  --paper: #eef3f8;
+
+  --brand: #1f6fd0;
+  --brand-deep: #0f4c96;
+  --brand-tint: #e9f1fc;
+
+  --eagles: #00614f;
+  --tennis: #b7791f;
+  --cricket: #1668b3;
+  --sun: #f3a712;
+  --green: #2f9e5f;
+  --amber: #d99a00;
+  --grey: #97a2b2;
+  --violet: #7c4dcc;
+
+  --r-sm: 12px;
+  --r: 18px;
+  --r-lg: 26px;
+
+  --sh-1: 0 1px 2px rgba(16, 32, 54, .05), 0 2px 8px rgba(16, 32, 54, .05);
+  --sh-2: 0 2px 6px rgba(16, 32, 54, .06), 0 12px 30px rgba(16, 32, 54, .08);
+  --sh-3: 0 6px 16px rgba(16, 32, 54, .09), 0 24px 60px rgba(16, 32, 54, .12);
+
+  --nav-h: 60px;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--nav-h) + 18px); }
+
+body {
+  margin: 0;
+  min-height: 100%;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 16.5px;
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Blurred copy of the hero, fixed behind everything. Gives the page depth
+   without ever sitting directly under body text. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: var(--hero-blur, var(--hero)) center / cover no-repeat;
+  filter: blur(14px) saturate(1.1);
+  transform: scale(1.12);
+  opacity: .34;
+  z-index: -2;
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(238, 243, 248, .58) 0%, rgba(238, 243, 248, .90) 40%, #eef3f8 100%);
+  z-index: -1;
+}
+
+h1, h2, h3, .display {
+  font-family: "Outfit", "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  line-height: 1.2;
+}
+
+.wrap { max-width: 1140px; margin: 0 auto; padding: 0 20px; }
+
+/* ======================= hero ======================= */
+.hero {
+  position: relative;
+  margin: 18px auto 0;
+  max-width: 1140px;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--sh-3);
+  isolation: isolate;
+}
+.hero-img {
+  position: absolute; inset: 0;
+  background: var(--hero) center var(--hero-y, 50%) / cover no-repeat;
+  z-index: -2;
+}
+/* The photo has bright snow and pale scree right where the title sits, so
+   white text needs real help. These stops were measured against the actual
+   pixels at five viewport widths: worst-case contrast is 5.1:1 and the median
+   is ~14:1, so it clears WCAG AA everywhere while leaving the top two thirds
+   of the picture untouched. If you swap the photo, re-check it. */
+.hero-scrim {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(180deg, rgba(6, 22, 48, .26) 0%, rgba(6, 22, 48, 0) 30%),
+    linear-gradient(0deg,
+      rgba(5, 16, 36, .90) 0%,
+      rgba(5, 16, 36, .82) 20%,
+      rgba(5, 16, 36, .60) 42%,
+      rgba(5, 16, 36, .30) 64%,
+      rgba(5, 16, 36, 0) 82%);
+  z-index: -1;
+}
+.hero-inner {
+  padding: 120px 34px 30px;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  color: #fff;
+}
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  align-self: flex-start;
+  background: rgba(255, 255, 255, .16);
+  border: 1px solid rgba(255, 255, 255, .28);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 6px 14px; border-radius: 999px;
+  font-size: .76rem; font-weight: 700;
+  letter-spacing: .09em; text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.hero h1 {
+  font-size: clamp(2.2rem, 6vw, 3.6rem);
+  margin: 0 0 6px;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, .35);
+}
+.hero .date {
+  font-size: clamp(.95rem, 2.4vw, 1.12rem);
+  font-weight: 600; opacity: .95;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, .4);
+}
+.hero .tagline { margin: 2px 0 20px; opacity: .82; font-size: .95rem; }
+
+.agebar { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.agebar .lbl {
+  font-size: .74rem; font-weight: 700; letter-spacing: .09em;
+  text-transform: uppercase; opacity: .8; margin-right: 2px;
+}
+.agebtn {
+  border: 1px solid rgba(255, 255, 255, .45);
+  background: rgba(255, 255, 255, .12);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  color: #fff; padding: 8px 18px; border-radius: 999px;
+  font: inherit; font-weight: 700; font-size: .88rem; cursor: pointer;
+  transition: background .15s ease, transform .15s ease, color .15s ease;
+}
+.agebtn:hover { background: rgba(255, 255, 255, .24); transform: translateY(-1px); }
+.agebtn[aria-pressed="true"] {
+  background: #fff; color: var(--brand-deep); border-color: #fff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .22);
+}
+
+/* ======================= sticky nav ======================= */
+.nav {
+  position: sticky; top: 0; z-index: 50;
+  margin: 16px auto 34px;
+  max-width: 1140px;
+  padding: 0 20px;
+}
+.nav-inner {
+  display: flex; gap: 4px; align-items: center;
+  height: var(--nav-h);
+  padding: 0 8px;
+  background: rgba(255, 255, 255, .78);
+  backdrop-filter: blur(18px) saturate(1.6);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, .7);
+  border-radius: 999px;
+  box-shadow: var(--sh-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.nav-inner::-webkit-scrollbar { display: none; }
+.nav a {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 15px; border-radius: 999px;
+  color: var(--ink-2); text-decoration: none;
+  font-size: .87rem; font-weight: 600; white-space: nowrap;
+  transition: background .15s ease, color .15s ease;
+}
+.nav a:hover { background: var(--brand-tint); color: var(--brand-deep); }
+.nav a.active { background: var(--ink); color: #fff; }
+
+/* ======================= sections ======================= */
+section { margin: 0 0 46px; scroll-margin-top: calc(var(--nav-h) + 20px); }
+
+.sec-head {
+  display: flex; align-items: center; gap: 12px;
+  margin: 0 0 18px;
+}
+.sec-head .ico {
+  width: 42px; height: 42px; flex: 0 0 42px;
+  display: grid; place-items: center;
+  border-radius: 13px;
+  font-size: 1.2rem;
+  background: var(--brand-tint);
+  box-shadow: inset 0 0 0 1px rgba(31, 111, 208, .12);
+}
+.sec-head h2 { font-size: 1.4rem; margin: 0; }
+.sec-head .sub { font-size: .85rem; color: var(--ink-3); font-weight: 500; margin: 0; }
+
+.grid { display: grid; gap: 18px; }
+.grid.two { grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
+.grid.three { grid-template-columns: repeat(auto-fit, minmax(272px, 1fr)); }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 22px;
+  box-shadow: var(--sh-1);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.grid .card:hover { transform: translateY(-3px); box-shadow: var(--sh-2); }
+.card h3 { margin: 0 0 9px; font-size: 1.09rem; line-height: 1.35; }
+.card p { margin: 0 0 11px; color: var(--ink-2); }
+
+.meta {
+  font-size: .72rem; color: var(--ink-3);
+  text-transform: uppercase; letter-spacing: .08em; font-weight: 700;
+  margin-bottom: 8px;
+}
+a { color: var(--brand); }
+.readmore {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-weight: 700; font-size: .87rem; text-decoration: none;
+}
+.readmore:hover { text-decoration: underline; }
+
+.talk {
+  margin-top: 14px; padding: 12px 14px;
+  background: var(--brand-tint);
+  border-radius: var(--r-sm);
+  font-size: .9rem; color: var(--ink-2);
+}
+.talk b {
+  display: block; font-size: .68rem; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--brand-deep); margin-bottom: 3px;
+}
+
+/* ======================= sports ======================= */
+.tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.tab {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, .8);
+  padding: 9px 18px; border-radius: 999px;
+  font: inherit; font-weight: 700; font-size: .88rem;
+  cursor: pointer; color: var(--ink-3);
+  transition: all .15s ease;
+}
+.tab:hover { border-color: var(--ink-3); color: var(--ink); }
+.tab[aria-selected="true"] { color: #fff; border-color: transparent; box-shadow: var(--sh-1); }
+.tab[data-team="eagles"][aria-selected="true"]  { background: var(--eagles); }
+.tab[data-team="tennis"][aria-selected="true"]  { background: var(--tennis); }
+.tab[data-team="cricket"][aria-selected="true"] { background: var(--cricket); }
+
+/* ======================= word of the day ======================= */
+.wotd {
+  background:
+    radial-gradient(120% 150% at 100% 0%, #fff6e3 0%, rgba(255, 246, 227, 0) 55%),
+    var(--card);
+  border-left: 4px solid var(--sun);
+}
+.wotd .word {
+  font-family: "Outfit", sans-serif;
+  font-size: clamp(2rem, 5vw, 2.7rem); font-weight: 700;
+  letter-spacing: -.03em; line-height: 1.1; margin-bottom: 4px;
+}
+.wotd .pron { color: var(--ink-3); font-style: italic; margin-right: 8px; }
+.wotd .pos {
+  display: inline-block; font-size: .68rem; font-weight: 800;
+  background: var(--brand-tint); color: var(--brand-deep);
+  padding: 3px 10px; border-radius: 999px;
+  text-transform: uppercase; letter-spacing: .08em;
+}
+.wotd .def { font-size: 1.06rem; color: var(--ink); margin-top: 12px; }
+.wotd .example {
+  border-left: 3px solid var(--sun); padding-left: 14px;
+  font-style: italic; color: var(--ink-2);
+}
+.wotd .why { font-size: .88rem; color: var(--ink-3); }
+
+/* ======================= puzzles ======================= */
+.card h3 .emoji {
+  display: inline-block;
+  font-size: 1.15rem;
+  margin-right: 2px;
+  vertical-align: -1px;
+}
+.q { font-size: 1.03rem; color: var(--ink); }
+.reveal {
+  margin-top: 14px; border: 0;
+  background: var(--ink); color: #fff;
+  padding: 10px 20px; border-radius: 999px;
+  font: inherit; font-weight: 700; font-size: .88rem; cursor: pointer;
+  transition: opacity .15s ease, transform .15s ease;
+}
+.reveal:hover { opacity: .87; transform: translateY(-1px); }
+.answer {
+  display: none; margin-top: 14px; padding: 14px 16px;
+  background: #f0f9f3; border-radius: var(--r-sm);
+  border-left: 3px solid var(--green);
+}
+.answer.show { display: block; animation: pop .22s ease; }
+@keyframes pop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.answer .a { font-weight: 700; }
+.answer .s { font-size: .92rem; color: var(--ink-2); margin-top: 5px; }
+
+/* ======================= game panels ======================= */
+.game {
+  background: linear-gradient(168deg, #16273f 0%, #22384f 55%, #1b3350 100%);
+  border-radius: var(--r-lg);
+  padding: 26px 22px;
+  box-shadow: var(--sh-2);
+  color: #eaf1f8;
+  border: 1px solid rgba(255, 255, 255, .08);
+}
+.game .meta { color: #9db4cc; }
+.game .hint {
+  text-align: center; color: #cfe0f0; font-size: .95rem;
+  margin: 0 auto 16px; max-width: 460px;
+}
+.game .hint b {
+  display: block; font-size: .68rem; letter-spacing: .1em;
+  text-transform: uppercase; color: #7fa8cf; margin-bottom: 3px;
+}
+
+/* wordle
+   Everything here is fluid. Fixed pixel keys overflowed every phone narrower
+   than 414px, so the board and keyboard now divide the available width
+   instead of assuming it. */
+.wordle-board {
+  display: grid; gap: clamp(4px, 1.4vw, 7px);
+  width: 100%; max-width: 330px;
+  margin: 4px auto 12px;
+}
+.wordle-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: clamp(4px, 1.4vw, 7px); }
+.wl-tile {
+  width: 100%; aspect-ratio: 1 / 1; min-width: 0;
+  border: 2px solid rgba(255, 255, 255, .18);
+  border-radius: clamp(8px, 2.4vw, 11px);
+  display: flex; align-items: center; justify-content: center;
+  font-family: "Outfit", sans-serif;
+  font-size: clamp(1.05rem, 5.6vw, 1.6rem); font-weight: 700; text-transform: uppercase;
+  background: rgba(255, 255, 255, .05); color: #fff;
+  transition: transform .12s ease, background .2s ease, border-color .2s ease;
+}
+.wl-tile.filled { border-color: rgba(255, 255, 255, .5); transform: scale(1.05); }
+.wl-tile.correct { background: var(--green); border-color: var(--green); }
+.wl-tile.present { background: var(--amber); border-color: var(--amber); }
+.wl-tile.absent  { background: rgba(255, 255, 255, .1); border-color: rgba(255, 255, 255, .12); color: #8fa3b8; }
+
+.kb { display: grid; gap: clamp(4px, 1.2vw, 7px); width: 100%; max-width: 500px; margin: 0 auto; }
+.kb-row { display: flex; gap: clamp(3px, 1vw, 6px); width: 100%; }
+.key {
+  flex: 1 1 0; min-width: 0; padding: 0;
+  height: clamp(40px, 11vw, 48px);
+  border: 0; border-radius: clamp(6px, 1.8vw, 9px);
+  background: rgba(255, 255, 255, .16); color: #fff;
+  font: inherit; font-weight: 700;
+  font-size: clamp(.72rem, 3.4vw, .96rem);
+  cursor: pointer; text-transform: uppercase;
+  transition: background .15s ease, transform .1s ease;
+}
+.key:hover { background: rgba(255, 255, 255, .26); }
+.key:active { transform: scale(.94); }
+.key.wide { flex: 1.7 1 0; font-size: clamp(.52rem, 2.2vw, .74rem); letter-spacing: .03em; }
+.key.correct { background: var(--green); }
+.key.present { background: var(--amber); }
+.key.absent  { background: rgba(255, 255, 255, .07); color: #7d90a5; }
+
+/* connections */
+.conn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; margin-bottom: 12px; }
+.conn-tile {
+  aspect-ratio: 5 / 3.4; border: 0; border-radius: clamp(8px, 2.2vw, 12px);
+  background: rgba(255, 255, 255, .14); color: #fff;
+  font: inherit; font-weight: 700;
+  /* ENDERMAN and SHARPENER are 9 characters in a ~70px tile on a phone */
+  font-size: clamp(.52rem, 2.5vw, .86rem);
+  line-height: 1.05; letter-spacing: -.01em;
+  overflow-wrap: anywhere; hyphens: auto;
+  cursor: pointer; padding: 3px; text-transform: uppercase;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  min-width: 0;
+  transition: transform .12s ease, background .15s ease;
+}
+.conn-tile:hover { background: rgba(255, 255, 255, .24); transform: translateY(-2px); }
+.conn-tile.selected { background: #fff; color: #16273f; box-shadow: 0 4px 14px rgba(0, 0, 0, .3); }
+.conn-solved {
+  grid-column: span 4; border-radius: 12px; padding: 13px;
+  text-align: center; color: #14202e;
+  animation: pop .25s ease;
+}
+.conn-solved .name { font-weight: 800; font-size: .92rem; letter-spacing: .02em; }
+.conn-solved .words { font-size: .85rem; opacity: .8; }
+.d1 { background: #f7d154; }
+.d2 { background: #86d07a; }
+.d3 { background: #7ab8ef; }
+.d4 { background: #c396ea; }
+
+.conn-bar { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.mistakes { display: flex; gap: 7px; align-items: center; font-size: .84rem; color: #a9c0d6; font-weight: 600; }
+.dot { width: 11px; height: 11px; border-radius: 50%; background: #fff; }
+.dot.used { background: rgba(255, 255, 255, .2); }
+.btn {
+  border: 1px solid rgba(255, 255, 255, .25);
+  background: rgba(255, 255, 255, .1); color: #fff;
+  padding: 10px 20px; border-radius: 999px;
+  font: inherit; font-weight: 700; font-size: .87rem; cursor: pointer;
+  transition: background .15s ease, transform .12s ease;
+}
+.btn:hover:not(:disabled) { background: rgba(255, 255, 255, .2); transform: translateY(-1px); }
+.btn.primary { background: #fff; color: #16273f; border-color: #fff; }
+.btn.primary:hover:not(:disabled) { background: #dceaf7; }
+.btn:disabled { opacity: .35; cursor: default; }
+
+.toast {
+  min-height: 26px; text-align: center;
+  font-weight: 700; font-size: .93rem; color: #fff; margin: 10px 0;
+}
+
+/* ======================= on this day ======================= */
+#history .card {
+  background:
+    radial-gradient(120% 130% at 0% 0%, #eef3fd 0%, rgba(238, 243, 253, 0) 52%),
+    var(--card);
+}
+.year {
+  font-family: "Outfit", sans-serif;
+  font-size: 1.75rem; font-weight: 700; color: var(--brand);
+  line-height: 1; margin-bottom: 6px; letter-spacing: -.02em;
+}
+.why { font-size: .89rem; color: var(--ink-3); font-style: italic; margin-top: 10px; }
+
+/* ======================= joke ======================= */
+.joke {
+  text-align: center; padding: 40px 26px;
+  background: linear-gradient(140deg, #fff5da 0%, #ffe9f0 100%);
+  border: 1px solid #f6e2c4;
+}
+.joke .setup {
+  font-family: "Outfit", sans-serif;
+  font-size: clamp(1.15rem, 3vw, 1.45rem); font-weight: 600;
+  margin-bottom: 18px; color: var(--ink);
+}
+.joke .punch {
+  font-family: "Outfit", sans-serif;
+  font-size: clamp(1.3rem, 3.6vw, 1.75rem); font-weight: 700;
+  color: var(--violet); display: none;
+}
+.joke .punch.show { display: block; animation: pop .3s ease; }
+.joke .reveal { background: var(--violet); }
+
+/* ======================= story ======================= */
+.story { max-width: 720px; padding: 30px; }
+.story h3 { font-size: clamp(1.3rem, 3.2vw, 1.6rem); margin-bottom: 6px; }
+.story p { margin: 0 0 15px; font-size: 1.02rem; }
+.story .lesson {
+  background: #fffaef; border-left: 4px solid var(--sun);
+  padding: 16px 18px; border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  font-weight: 600; color: var(--ink);
+}
+.badge {
+  display: inline-block; font-size: .67rem; font-weight: 800;
+  letter-spacing: .09em; text-transform: uppercase;
+  padding: 4px 11px; border-radius: 999px;
+  background: var(--line-2); color: var(--ink-3); margin-bottom: 12px;
+}
+.badge.true { background: #e4f6ea; color: #1c7a44; }
+.badge.parable { background: #f2ecfc; color: #6338b0; }
+
+.empty { color: var(--ink-3); font-style: italic; }
+
+/* ======================= feedback ======================= */
+.fb { max-width: 640px; }
+.fb-q {
+  display: block; font-weight: 700; font-size: .93rem;
+  margin: 18px 0 8px; color: var(--ink);
+}
+.fb-q:first-child { margin-top: 0; }
+.fb-rate { display: flex; gap: 9px; flex-wrap: wrap; }
+.rate {
+  flex: 1 1 130px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  border: 1px solid var(--line); background: #fff; color: var(--ink-2);
+  padding: 12px 14px; border-radius: var(--r-sm);
+  font: inherit; font-weight: 700; font-size: .9rem; cursor: pointer;
+  transition: all .15s ease;
+}
+.rate span { font-size: 1.25rem; }
+.rate:hover { border-color: var(--brand); color: var(--brand-deep); }
+.rate[aria-pressed="true"] {
+  background: var(--brand); border-color: var(--brand); color: #fff;
+  box-shadow: 0 4px 12px rgba(31, 111, 208, .25);
+}
+.fb select, .fb textarea {
+  width: 100%; font: inherit; color: var(--ink);
+  border: 1px solid var(--line); border-radius: var(--r-sm);
+  padding: 11px 13px; background: #fff; resize: vertical;
+}
+.fb select:focus, .fb textarea:focus {
+  outline: 2px solid var(--brand); outline-offset: 1px; border-color: var(--brand);
+}
+.fb-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-top: 14px; flex-wrap: wrap;
+}
+.fb-count { font-size: .8rem; color: var(--ink-3); }
+.fb .btn.primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+.fb .btn.primary:hover:not(:disabled) { background: #24384f; }
+.fb-done {
+  display: none; margin-top: 14px; padding: 13px 15px;
+  background: #eefaf1; border-left: 3px solid var(--green);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0; font-weight: 600; color: #1c6b3d;
+}
+.fb-done.show { display: block; animation: pop .25s ease; }
+.fb-done.err { background: #fdeeee; border-left-color: #c0392b; color: #a5322a; }
+
+/* ======================= misc ======================= */
+footer {
+  text-align: center; color: var(--ink-3); font-size: .82rem;
+  padding: 26px 0 60px; margin-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.loading {
+  text-align: center; padding: 70px 20px;
+  color: var(--ink-3); font-weight: 600;
+}
+.spinner {
+  width: 32px; height: 32px; margin: 0 auto 16px;
+  border: 3px solid var(--line);
+  border-top-color: var(--brand);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ======================= responsive ======================= */
+@media (max-width: 720px) {
+  .hero { margin: 10px 12px 0; border-radius: var(--r-lg); }
+  /* Narrower viewport crops the photo harder, so bias the focal point up a
+     little to keep the peaks and the lake in frame rather than just scree. */
+  .hero-img { background-position: center 38%; }
+  .hero-inner { padding: 90px 22px 24px; min-height: 340px; }
+  .nav { margin: 12px auto 28px; padding: 0 12px; }
+  .wrap { padding: 0 14px; }
+  .story { padding: 22px; }
+  .joke { padding: 30px 18px; }
+  .game { padding: 20px 14px; border-radius: var(--r); }
+  /* the board, keyboard and tiles are fluid now, so no fixed overrides here */
+  .conn-grid { gap: 6px; }
+  .sec-head .ico { width: 36px; height: 36px; flex-basis: 36px; font-size: 1.05rem; }
+  .sec-head h2 { font-size: 1.2rem; }
+}
+
+/* Very narrow phones (iPhone SE and similar). Claw back horizontal padding so
+   the keyboard keys stay above a comfortable ~24px tap target. */
+@media (max-width: 360px) {
+  .wrap { padding: 0 10px; }
+  .game { padding: 16px 8px; }
+  .hero { margin: 8px 8px 0; }
+  .hero-inner { padding: 80px 16px 20px; min-height: 300px; }
+  .nav { padding: 0 8px; }
+  .card { padding: 16px; }
+  .story { padding: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { animation: none !important; transition: none !important; }
+}

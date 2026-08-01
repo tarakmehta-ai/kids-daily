@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kids Daily</title>
+<meta name="description" content="A fresh page every morning: news, puzzles, word games and a good story.">
+<meta name="theme-color" content="#16273f">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="/static/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏔️</text></svg>">
+</head>
+<body>
+
+<!-- ============ hero ============ -->
+<header class="hero">
+  <div class="hero-img" role="img" aria-label="The view from Mount Titlis in Switzerland, looking down over the turquoise Trubsee lake with the cable car station on the right"></div>
+  <div class="hero-scrim"></div>
+  <div class="hero-inner">
+    <span class="eyebrow">Fresh every morning</span>
+    <h1>Kids Daily</h1>
+    <div class="date" id="date">…</div>
+    <p class="tagline">News, puzzles, word games and one good story.</p>
+    <div class="agebar">
+      <span class="lbl">Puzzle level</span>
+      <button class="agebtn" data-age="9" aria-pressed="false">Age 9</button>
+      <button class="agebtn" data-age="11" aria-pressed="false">Age 11</button>
+    </div>
+  </div>
+</header>
+
+<!-- ============ nav ============ -->
+<nav class="nav" aria-label="Jump to a section">
+  <div class="nav-inner">
+    <a href="#s-news">📰 News</a>
+    <a href="#s-sports">🏆 Sports</a>
+    <a href="#s-word">📖 Word</a>
+    <a href="#s-brain">🧠 Brain</a>
+    <a href="#s-wordle">🟩 Guess</a>
+    <a href="#s-conn">🔗 Groups</a>
+    <a href="#s-history">🕰️ History</a>
+    <a href="#s-joke">😄 Joke</a>
+    <a href="#s-story">💛 Story</a>
+    <a href="#s-feedback">✍️ Feedback</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div id="loading" class="loading">
+    <div class="spinner"></div>
+    Getting today's page ready…
+  </div>
+
+  <main id="content" style="display:none">
+
+    <section id="s-news">
+      <div class="sec-head">
+        <div class="ico">📰</div>
+        <div>
+          <h2>Today's News</h2>
+          <p class="sub">What's happening in the world</p>
+        </div>
+      </div>
+      <div class="grid two" id="news"></div>
+    </section>
+
+    <section id="s-sports">
+      <div class="sec-head">
+        <div class="ico">🏆</div>
+        <div>
+          <h2>Sports</h2>
+          <p class="sub">Eagles, tennis and Indian cricket</p>
+        </div>
+      </div>
+      <div class="tabs" role="tablist">
+        <button class="tab" data-team="eagles" role="tab" aria-selected="true">Eagles</button>
+        <button class="tab" data-team="tennis" role="tab" aria-selected="false">Tennis</button>
+        <button class="tab" data-team="cricket" role="tab" aria-selected="false">Indian Cricket</button>
+      </div>
+      <div class="grid two" id="sports-body"></div>
+    </section>
+
+    <section id="s-word">
+      <div class="sec-head">
+        <div class="ico">📖</div>
+        <div>
+          <h2>Word of the Day</h2>
+          <p class="sub">One new word worth keeping</p>
+        </div>
+      </div>
+      <div class="card wotd" id="wotd"></div>
+    </section>
+
+    <section id="s-brain">
+      <div class="sec-head">
+        <div class="ico">🧠</div>
+        <div>
+          <h2>Brain Teasers</h2>
+          <p class="sub">Switch the level up in the header</p>
+        </div>
+      </div>
+      <div class="grid two" id="puzzles"></div>
+    </section>
+
+    <section id="s-wordle">
+      <div class="sec-head">
+        <div class="ico">🟩</div>
+        <div>
+          <h2>Guess the Word</h2>
+          <p class="sub">Five letters, six tries</p>
+        </div>
+      </div>
+      <div class="game">
+        <p class="hint"><b>Clue</b><span id="wl-hint"></span></p>
+        <div class="wordle-board" id="wl-board"></div>
+        <div class="toast" id="wl-toast"></div>
+        <div class="kb" id="wl-kb"></div>
+      </div>
+    </section>
+
+    <section id="s-conn">
+      <div class="sec-head">
+        <div class="ico">🔗</div>
+        <div>
+          <h2>Make Four Groups</h2>
+          <p class="sub">Find four groups of four. You get four mistakes.</p>
+        </div>
+      </div>
+      <div class="game">
+        <div class="conn-grid" id="cn-grid"></div>
+        <div class="toast" id="cn-toast"></div>
+        <div class="conn-bar">
+          <div class="mistakes">Mistakes left <span id="cn-dots" style="display:flex;gap:7px"></span></div>
+          <div style="display:flex;gap:9px;flex-wrap:wrap">
+            <button class="btn" id="cn-shuffle">Shuffle</button>
+            <button class="btn" id="cn-clear">Clear</button>
+            <button class="btn primary" id="cn-submit">Submit</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="s-history">
+      <div class="sec-head">
+        <div class="ico">🕰️</div>
+        <div>
+          <h2>On This Day</h2>
+          <p class="sub">What happened on this date</p>
+        </div>
+      </div>
+      <div class="grid three" id="history"></div>
+    </section>
+
+    <section id="s-joke">
+      <div class="sec-head">
+        <div class="ico">😄</div>
+        <div>
+          <h2>Joke of the Day</h2>
+          <p class="sub">Groan responsibly</p>
+        </div>
+      </div>
+      <div class="card joke" id="joke"></div>
+    </section>
+
+    <section id="s-story">
+      <div class="sec-head">
+        <div class="ico">💛</div>
+        <div>
+          <h2>Story of the Day</h2>
+          <p class="sub">Something worth thinking about</p>
+        </div>
+      </div>
+      <div class="card story" id="story"></div>
+    </section>
+
+    <section id="s-feedback">
+      <div class="sec-head">
+        <div class="ico">✍️</div>
+        <div>
+          <h2>Tell Me What You Think</h2>
+          <p class="sub">This goes straight to Dad. Be honest.</p>
+        </div>
+      </div>
+      <div class="card fb" id="feedback">
+        <div class="fb-q">How was today's page?</div>
+        <div class="fb-rate" role="group" aria-label="Rate today's page">
+          <button class="rate" data-rating="love" aria-pressed="false"><span>😍</span>Loved it</button>
+          <button class="rate" data-rating="ok" aria-pressed="false"><span>🙂</span>It was OK</button>
+          <button class="rate" data-rating="meh" aria-pressed="false"><span>😴</span>Boring</button>
+        </div>
+
+        <label class="fb-q" for="fb-fav">Favourite bit today?</label>
+        <select id="fb-fav">
+          <option value="">— pick one (optional) —</option>
+          <option value="s-news">Today's News</option>
+          <option value="s-sports">Sports</option>
+          <option value="s-word">Word of the Day</option>
+          <option value="s-brain">Brain Teasers</option>
+          <option value="s-wordle">Guess the Word</option>
+          <option value="s-conn">Make Four Groups</option>
+          <option value="s-history">On This Day</option>
+          <option value="s-joke">Joke of the Day</option>
+          <option value="s-story">Story of the Day</option>
+        </select>
+
+        <label class="fb-q" for="fb-msg">Anything you want to say?</label>
+        <textarea id="fb-msg" rows="4" maxlength="1000"
+          placeholder="What should be different tomorrow? Too easy? Too hard? Want something new on here?"></textarea>
+        <div class="fb-bar">
+          <span class="fb-count" id="fb-count">1000 left</span>
+          <button class="btn primary" id="fb-send">Send it</button>
+        </div>
+        <div class="fb-done" id="fb-done"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    Made for two excellent humans. A brand-new page every morning.
+  </footer>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

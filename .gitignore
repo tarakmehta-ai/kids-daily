@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.DS_Store
+.env
+*.log
+
+# Local design preview only - 750KB with the photo inlined, and everything in
+# it is generated from static/. No reason to ship it to the server.
+preview.html

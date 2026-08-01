@@ -1,0 +1,48 @@
+# Render blueprint. With this file in the repo you can point Render at the
+# repository and it will configure the service itself - no manual form filling.
+#
+# Free plan notes:
+#   - 750 instance hours per month per workspace
+#   - the service spins down after 15 minutes with no traffic, and takes
+#     roughly a minute to wake up again
+#   - no persistent disk, so set CACHE_DATASET_REPO + HF_TOKEN (see DEPLOY.md)
+#     or the day gets regenerated - and re-billed - after every restart
+
+services:
+  - type: web
+    name: kids-daily
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    # Render injects PORT; binding anything else makes the deploy fail health checks.
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      # Set in the Render dashboard - never commit the key itself.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ADMIN_TOKEN
+        sync: false
+      - key: HF_TOKEN
+        sync: false
+      - key: CACHE_DATASET_REPO
+        sync: false
+      - key: SITE_TZ
+        value: America/New_York
+      - key: LINKS_MODE
+        value: allowlist
+      - key: CACHE_DIR
+        value: /tmp/kidsdaily
+      - key: STATS_DIR
+        value: /tmp/kidsdaily-stats
+      # Engagement tracking. Set to "off" to disable entirely.
+      - key: ANALYTICS
+        value: "on"
+      # Free HF dataset that persists both the cached day and the stats log.
+      # Without it, stats reset every time the service sleeps.
+      - key: STATS_DATASET_REPO
+        sync: false

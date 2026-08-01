@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kids Daily — stats</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#16202e;--ink2:#3d4a5c;--ink3:#6b7889;--line:#e3e8ef;--card:#fff;
+        --paper:#f4f7fa;--brand:#1f6fd0;--brand2:#7c4dcc;--green:#2f9e5f;--amber:#d99a00;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+       font-family:"Inter",system-ui,sans-serif;font-size:15.5px;line-height:1.6}
+  .wrap{max-width:1000px;margin:0 auto;padding:28px 18px 70px}
+  h1,h2,h3{font-family:"Outfit",sans-serif;letter-spacing:-.02em;margin:0}
+  h1{font-size:1.9rem}
+  h2{font-size:1.15rem;margin:0 0 14px}
+  header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;
+         flex-wrap:wrap;margin-bottom:8px}
+  .sub{color:var(--ink3);font-size:.9rem}
+  .tabs{display:flex;gap:8px;margin:22px 0 18px}
+  .tab{border:1px solid var(--line);background:#fff;color:var(--ink3);padding:8px 18px;
+       border-radius:999px;font:inherit;font-weight:700;font-size:.88rem;cursor:pointer}
+  .tab[aria-selected="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+        padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(16,32,54,.05)}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .kpi .n{font-family:"Outfit",sans-serif;font-size:1.85rem;font-weight:700;line-height:1.1}
+  .kpi .l{font-size:.76rem;text-transform:uppercase;letter-spacing:.07em;
+          color:var(--ink3);font-weight:700;margin-top:3px}
+  .row{display:grid;grid-template-columns:190px 1fr 82px;gap:12px;align-items:center;
+       padding:8px 0;border-bottom:1px solid #f1f4f8}
+  .row:last-child{border-bottom:0}
+  .row .nm{font-weight:600;font-size:.92rem}
+  .bar{background:#eef2f7;border-radius:999px;height:22px;overflow:hidden;display:flex}
+  .bar i{display:block;height:100%}
+  .bar .a9{background:var(--brand)}
+  .bar .a11{background:var(--brand2)}
+  .bar .aq{background:#b6c2d2}
+  .val{text-align:right;font-weight:700;font-size:.9rem;font-variant-numeric:tabular-nums}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.82rem;color:var(--ink3);
+          margin-bottom:12px}
+  .legend b{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px}
+  table{width:100%;border-collapse:collapse;font-size:.9rem}
+  th,td{text-align:left;padding:8px 6px;border-bottom:1px solid #f1f4f8}
+  th{font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3)}
+  td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+  .warn{background:#fff6e5;border:1px solid #f4dfae;border-radius:12px;padding:14px 16px;
+        font-size:.9rem;margin-bottom:16px}
+  .empty{color:var(--ink3);font-style:italic}
+  .spark{display:flex;align-items:flex-end;gap:3px;height:70px;margin-top:10px}
+  .spark i{flex:1 1 0;background:var(--brand);border-radius:3px 3px 0 0;min-height:2px;opacity:.85}
+  .spark i:hover{opacity:1}
+  footer{color:var(--ink3);font-size:.82rem;margin-top:26px;text-align:center}
+  .note{border-bottom:1px solid #f1f4f8;padding:12px 0}
+  .note:last-child{border-bottom:0}
+  .note.flagged{background:#fff6f5;border-left:3px solid #c0392b;padding-left:12px;
+                border-radius:0 8px 8px 0}
+  .nmeta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:.78rem;
+         color:var(--ink3);margin-bottom:4px}
+  .nmeta .face{font-size:1.1rem}
+  .nmeta .who{font-weight:700;color:var(--ink2)}
+  .nmeta .fav{background:#eef4fd;color:var(--brand);padding:2px 8px;border-radius:999px;font-weight:600}
+  .nmeta .flag{background:#fdeeee;color:#a5322a;padding:2px 8px;border-radius:999px;font-weight:700}
+  .msg{white-space:pre-wrap;font-size:.95rem}
+  @media(max-width:600px){.row{grid-template-columns:110px 1fr 64px;gap:8px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Kids Daily — stats</h1>
+      <div class="sub" id="range">loading…</div>
+    </div>
+    <div class="sub" id="persist"></div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab" data-view="today" aria-selected="true">Today</button>
+    <button class="tab" data-view="all" aria-selected="false">All time</button>
+  </div>
+
+  <div id="body"><p class="empty">Loading…</p></div>
+
+  <footer>Time is measured while a section is on screen and the tab is focused.</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var TOKEN = new URLSearchParams(location.search).get("token") || "";
+  var DATA = null, VIEW = "today";
+
+  function h(t, c, x) { var n = document.createElement(t); if (c) n.className = c;
+    if (x !== undefined) n.textContent = x; return n; }
+  function mins(s) {
+    s = Math.round(s || 0);
+    if (s < 60) return s + "s";
+    var m = Math.floor(s / 60), r = s % 60;
+    if (m < 60) return m + "m " + (r ? r + "s" : "");
+    return Math.floor(m / 60) + "h " + (m % 60) + "m";
+  }
+
+  function kpis(d) {
+    var box = h("div", "kpis");
+    [["Time on page", mins(d.total_seconds)],
+     ["Visits", d.sessions || 0],
+     ["Wordle played", (d.wordle.played || 0) + (d.wordle.won ? " (" + d.wordle.won + " won)" : "")],
+     ["Groups played", (d.connections.played || 0) + (d.connections.solved ? " (" + d.connections.solved + " solved)" : "")],
+     ["Answers peeked", Object.keys(d.answers_revealed || {}).reduce(function (a, k) { return a + d.answers_revealed[k]; }, 0)],
+     ["Jokes revealed", d.jokes_revealed || 0]
+    ].forEach(function (p) {
+      var k = h("div", "kpi");
+      k.appendChild(h("div", "n", String(p[1])));
+      k.appendChild(h("div", "l", p[0]));
+      box.appendChild(k);
+    });
+    return box;
+  }
+
+  function sectionChart(d) {
+    var c = h("div", "card");
+    c.appendChild(h("h2", null, "Where the time goes"));
+    var lg = h("div", "legend");
+    [["a9", "Age 9 level"], ["a11", "Age 11 level"], ["aq", "unknown"]].forEach(function (p) {
+      var s = h("span"); var b = h("b"); b.className = p[0];
+      s.appendChild(b); s.appendChild(document.createTextNode(p[1])); lg.appendChild(s);
+    });
+    c.appendChild(lg);
+    if (!d.sections.length) { c.appendChild(h("p", "empty", "No time recorded yet.")); return c; }
+    var max = d.sections[0].seconds || 1;
+    d.sections.forEach(function (s) {
+      var r = h("div", "row");
+      r.appendChild(h("div", "nm", s.label));
+      var bar = h("div", "bar");
+      var width = 100 * s.seconds / max;
+      ["9", "11", "?"].forEach(function (age) {
+        var v = (s.by_age || {})[age] || 0;
+        if (!v) return;
+        var i = h("i", age === "9" ? "a9" : age === "11" ? "a11" : "aq");
+        i.style.width = (width * v / s.seconds) + "%";
+        bar.appendChild(i);
+      });
+      r.appendChild(bar);
+      r.appendChild(h("div", "val", mins(s.seconds)));
+      c.appendChild(r);
+    });
+    return c;
+  }
+
+  function detail(d) {
+    var c = h("div", "card");
+    c.appendChild(h("h2", null, "Detail"));
+    var t = h("table");
+    var tb = h("tbody");
+    function row(k, v) {
+      var tr = h("tr"); tr.appendChild(h("td", null, k));
+      var td = h("td", "num", String(v)); tr.appendChild(td); tb.appendChild(tr);
+    }
+    row("Wordle win rate", d.wordle.played ? Math.round(100 * d.wordle.won / d.wordle.played) + "%" : "—");
+    row("Average guesses to win", d.wordle.avg_guesses === null ? "—" : d.wordle.avg_guesses);
+    row("Groups solve rate", d.connections.played ? Math.round(100 * d.connections.solved / d.connections.played) + "%" : "—");
+    row("Average mistakes", d.connections.avg_mistakes === null ? "—" : d.connections.avg_mistakes);
+    Object.keys(d.answers_revealed || {}).forEach(function (k) {
+      row("Answer revealed: " + k, d.answers_revealed[k]);
+    });
+    var links = Object.keys(d.link_clicks || {});
+    if (links.length) links.forEach(function (k) { row("Clicked through to " + k, d.link_clicks[k]); });
+    else row("Link click-throughs", 0);
+    t.appendChild(tb); c.appendChild(t);
+    return c;
+  }
+
+  function history(o) {
+    var c = h("div", "card");
+    c.appendChild(h("h2", null, "Day by day"));
+    if (!o.series || !o.series.length) { c.appendChild(h("p", "empty", "No history yet.")); return c; }
+    var max = Math.max.apply(null, o.series.map(function (s) { return s.seconds; })) || 1;
+    var sp = h("div", "spark");
+    o.series.forEach(function (s) {
+      var i = h("i");
+      i.style.height = Math.max(2, 100 * s.seconds / max) + "%";
+      i.title = s.date + " — " + mins(s.seconds) + (s.top ? " — most time: " + s.top : "");
+      sp.appendChild(i);
+    });
+    c.appendChild(sp);
+    var t = h("table"); var th = h("thead");
+    var hr = h("tr");
+    ["Date", "Most time on", "Visits", "Time"].forEach(function (x, i) {
+      var e = h("th", i > 1 ? "num" : null, x); hr.appendChild(e);
+    });
+    th.appendChild(hr); t.appendChild(th);
+    var tb = h("tbody");
+    o.series.slice().reverse().forEach(function (s) {
+      var tr = h("tr");
+      tr.appendChild(h("td", null, s.date));
+      tr.appendChild(h("td", null, s.top || "—"));
+      tr.appendChild(h("td", "num", String(s.sessions)));
+      tr.appendChild(h("td", "num", mins(s.seconds)));
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb); c.appendChild(t);
+    return c;
+  }
+
+  function feedbackCard(list) {
+    var c = h("div", "card");
+    c.appendChild(h("h2", null, "What they said (" + list.length + ")"));
+    if (!list.length) {
+      c.appendChild(h("p", "empty", "No notes yet."));
+      return c;
+    }
+    list.forEach(function (f) {
+      var n = h("div", "note" + (f.flagged ? " flagged" : ""));
+      var meta = h("div", "nmeta");
+      var face = f.rating === "love" ? "😍" : f.rating === "ok" ? "🙂" : f.rating === "meh" ? "😴" : "";
+      if (face) meta.appendChild(h("span", "face", face));
+      meta.appendChild(h("span", "who", "age " + (f.age || "?")));
+      meta.appendChild(h("span", "when", (f.ts || "").replace("T", " ").slice(0, 16)));
+      if (f.favourite) meta.appendChild(h("span", "fav", "♥ " + f.favourite));
+      if (f.flagged) meta.appendChild(h("span", "flag", "flagged by filter"));
+      n.appendChild(meta);
+      // textContent, never innerHTML - this is untrusted input from a public endpoint
+      if (f.message) n.appendChild(h("div", "msg", f.message));
+      c.appendChild(n);
+    });
+    return c;
+  }
+
+  function render() {
+    var box = document.getElementById("body");
+    box.innerHTML = "";
+    var d = VIEW === "today" ? DATA.today : DATA.overall;
+    var o = DATA.overall;
+
+    document.getElementById("range").textContent = VIEW === "today"
+      ? "Today — " + DATA.today.date
+      : (o.days_tracked ? o.days_tracked + " days tracked, " + o.first_day + " to " + o.last_day
+                        : "No history yet");
+    document.getElementById("persist").textContent = o.persistent
+      ? "" : "⚠ storage is not persistent — see below";
+
+    if (!o.persistent) {
+      var w = h("div", "warn");
+      w.innerHTML = "<b>Stats will reset when the service sleeps.</b> Render's free plan has no persistent disk. Set <code>HF_TOKEN</code> and <code>STATS_DATASET_REPO</code> to keep history — see DEPLOY.md step 6.";
+      box.appendChild(w);
+    }
+    box.appendChild(kpis(d));
+    box.appendChild(sectionChart(d));
+    box.appendChild(detail(d));
+    box.appendChild(feedbackCard(
+      VIEW === "today"
+        ? (DATA.feedback || []).filter(function (f) { return f.day === DATA.today.date; })
+        : (DATA.feedback || [])
+    ));
+    if (VIEW === "all") box.appendChild(history(o));
+  }
+
+  document.querySelectorAll(".tab").forEach(function (t) {
+    t.addEventListener("click", function () {
+      VIEW = t.dataset.view;
+      document.querySelectorAll(".tab").forEach(function (x) {
+        x.setAttribute("aria-selected", String(x.dataset.view === VIEW));
+      });
+      if (DATA) render();
+    });
+  });
+
+  fetch("/api/stats.json?token=" + encodeURIComponent(TOKEN))
+    .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then(function (d) { DATA = d; render(); })
+    .catch(function (e) {
+      document.getElementById("body").innerHTML =
+        "<div class='card'><p class='empty'>Could not load stats (" + e.message +
+        "). Check that the <code>token</code> in the URL matches ADMIN_TOKEN.</p></div>";
+    });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 760" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Illustration of Mount Titlis: snow peaks above a sea of cloud, with a cable car and the cliff walk bridge">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#0a2a6b"/>
+      <stop offset="28%"  stop-color="#2563b8"/>
+      <stop offset="55%"  stop-color="#63a6dd"/>
+      <stop offset="78%"  stop-color="#a9d6f0"/>
+      <stop offset="100%" stop-color="#ffd9ac"/>
+    </linearGradient>
+    <radialGradient id="sunglow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%"   stop-color="#fff6dc" stop-opacity="0.95"/>
+      <stop offset="35%"  stop-color="#ffe6ac" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#ffd9ac" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="far" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#cfe2f2"/><stop offset="100%" stop-color="#9dbedb"/>
+    </linearGradient>
+    <linearGradient id="mid" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#eaf4fc"/><stop offset="100%" stop-color="#7ba3c9"/>
+    </linearGradient>
+    <linearGradient id="nearLit" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#dbeaf7"/>
+    </linearGradient>
+    <linearGradient id="nearShade" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#9fc0dd"/><stop offset="100%" stop-color="#5f89b3"/>
+    </linearGradient>
+    <linearGradient id="glacier" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#bfe4f5"/><stop offset="100%" stop-color="#6fb2d6"/>
+    </linearGradient>
+    <linearGradient id="fg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f2f8fd"/><stop offset="100%" stop-color="#c2d8ea"/>
+    </linearGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="16"/>
+    </filter>
+    <filter id="softer" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="30"/>
+    </filter>
+  </defs>
+
+  <!-- sky -->
+  <rect width="1600" height="760" fill="url(#sky)"/>
+
+  <!-- stars, high up where the sky is deep -->
+  <g fill="#ffffff" opacity="0.65">
+    <circle cx="150" cy="52" r="1.7"/><circle cx="330" cy="96" r="1.2"/><circle cx="520" cy="40" r="1.5"/>
+    <circle cx="760" cy="78" r="1.1"/><circle cx="980" cy="46" r="1.6"/><circle cx="1220" cy="88" r="1.3"/>
+    <circle cx="1420" cy="54" r="1.5"/><circle cx="1520" cy="120" r="1"/><circle cx="240" cy="150" r="1"/>
+    <circle cx="1080" cy="132" r="1.1"/>
+  </g>
+
+  <!-- sun -->
+  <circle cx="1210" cy="430" r="230" fill="url(#sunglow)"/>
+  <circle cx="1210" cy="430" r="46" fill="#fff8e4" opacity="0.98"/>
+
+  <!-- far ridge -->
+  <path fill="url(#far)" opacity="0.85"
+        d="M0 470 L120 402 L188 438 L286 356 L360 410 L450 344 L540 420 L640 372 L742 436 L820 396
+           L900 448 L1010 386 L1105 452 L1200 404 L1300 460 L1400 412 L1500 458 L1600 424 L1600 760 L0 760 Z"/>
+
+  <!-- mid range with snow caps -->
+  <path fill="url(#mid)"
+        d="M0 560 L96 496 L170 534 L268 448 L330 486 L420 404 L520 494 L610 442 L700 512 L790 456
+           L880 520 L980 462 L1070 528 L1170 470 L1260 534 L1360 486 L1460 540 L1560 500 L1600 522 L1600 760 L0 760 Z"/>
+  <g fill="#ffffff" opacity="0.92">
+    <path d="M420 404 L452 440 L432 446 L410 432 L396 444 L388 434 Z"/>
+    <path d="M268 448 L296 480 L276 486 L258 472 L246 482 L238 472 Z"/>
+    <path d="M980 462 L1010 496 L988 502 L970 488 L956 498 L948 488 Z"/>
+    <path d="M1170 470 L1198 502 L1178 508 L1160 494 L1148 504 L1140 494 Z"/>
+    <path d="M610 442 L638 474 L618 480 L600 466 L588 476 L580 466 Z"/>
+  </g>
+
+  <!-- the Titlis massif -->
+  <path fill="url(#nearLit)"
+        d="M300 760 L620 300 L700 366 L742 322 L840 434 L900 396 L1010 520 L1080 470 L1240 760 Z"/>
+  <!-- shaded east face -->
+  <path fill="url(#nearShade)" opacity="0.9"
+        d="M620 300 L700 366 L742 322 L840 434 L900 396 L1010 520 L1080 470 L1240 760 L830 760 Z"/>
+  <!-- ridge highlights -->
+  <g fill="#ffffff" opacity="0.55">
+    <path d="M620 300 L648 340 L604 400 L566 470 L520 560 L470 660 L440 760 L392 760 L470 596 L548 442 Z"/>
+    <path d="M840 434 L868 470 L836 520 L804 596 L790 660 L764 760 L730 760 L788 604 L816 508 Z"/>
+  </g>
+  <!-- glacier tongue -->
+  <path fill="url(#glacier)" opacity="0.7"
+        d="M700 470 L760 520 L742 592 L780 664 L742 760 L620 760 L648 660 L636 566 Z"/>
+  <g stroke="#ffffff" stroke-width="3" opacity="0.5" fill="none" stroke-linecap="round">
+    <path d="M676 560 q40 18 74 6"/><path d="M664 626 q46 20 84 6"/><path d="M660 694 q46 20 84 4"/>
+  </g>
+
+  <!-- cliff walk suspension bridge, between the main peak and a spur -->
+  <g stroke="#e8f2fa" stroke-width="2.6" fill="none" opacity="0.95">
+    <path d="M905 402 q95 44 190 12"/>
+    <path d="M905 386 q95 42 190 10"/>
+    <g stroke-width="1.6" opacity="0.75">
+      <path d="M925 391 L925 407"/><path d="M955 398 L955 414"/><path d="M985 403 L985 419"/>
+      <path d="M1015 405 L1015 421"/><path d="M1045 403 L1045 419"/><path d="M1075 398 L1075 414"/>
+    </g>
+  </g>
+
+  <!-- cable car -->
+  <g opacity="0.95">
+    <path d="M250 300 L1140 452" stroke="#dbe9f5" stroke-width="2" fill="none" opacity="0.7"/>
+    <g transform="translate(612,362)">
+      <path d="M0 -12 L0 0" stroke="#cfe0ee" stroke-width="2.4"/>
+      <rect x="-19" y="0" width="38" height="26" rx="9" fill="#f45b5b"/>
+      <rect x="-13" y="6" width="26" height="11" rx="4" fill="#bfe4f5"/>
+    </g>
+  </g>
+
+  <!-- sea of cloud -->
+  <g fill="#ffffff">
+    <g opacity="0.5" filter="url(#softer)">
+      <ellipse cx="240" cy="612" rx="290" ry="58"/>
+      <ellipse cx="720" cy="648" rx="330" ry="60"/>
+      <ellipse cx="1240" cy="606" rx="330" ry="62"/>
+    </g>
+    <g opacity="0.9" filter="url(#soft)">
+      <ellipse cx="180" cy="650" rx="230" ry="42"/>
+      <ellipse cx="480" cy="676" rx="200" ry="38"/>
+      <ellipse cx="900" cy="662" rx="240" ry="40"/>
+      <ellipse cx="1320" cy="678" rx="260" ry="44"/>
+      <ellipse cx="1560" cy="646" rx="180" ry="38"/>
+    </g>
+  </g>
+
+  <!-- foreground snow bank -->
+  <path fill="url(#fg)" d="M0 700 q180 -54 360 -14 q190 42 372 -6 q196 -52 400 -6 q200 40 468 -12 L1600 760 L0 760 Z"/>
+  <path fill="#ffffff" opacity="0.6" d="M0 726 q200 -40 396 -6 q206 36 404 -4 q206 -40 400 -4 q160 16 400 -6 L1600 760 L0 760 Z"/>
+</svg>
