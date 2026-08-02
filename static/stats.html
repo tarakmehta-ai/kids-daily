@@ -65,6 +65,8 @@
   .nmeta .fav{background:#eef4fd;color:var(--brand);padding:2px 8px;border-radius:999px;font-weight:600}
   .nmeta .flag{background:#fdeeee;color:#a5322a;padding:2px 8px;border-radius:999px;font-weight:700}
   .msg{white-space:pre-wrap;font-size:.95rem}
+  .jline{font-size:.93rem;margin-bottom:2px}
+  .jline b{color:var(--ink3);font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em}
   @media(max-width:600px){.row{grid-template-columns:110px 1fr 64px;gap:8px}}
 </style>
 </head>
@@ -230,6 +232,33 @@
     return c;
   }
 
+  var MOOD = {sunny:"☀️",happy:"😄",calm:"😌",tired:"🥱",meh:"😐"};
+
+  function journalCard(list) {
+    var c = h("div", "card");
+    c.appendChild(h("h2", null, "Summer check-ins (" + list.length + ")"));
+    if (!list.length) { c.appendChild(h("p","empty","Nothing yet.")); return c; }
+    list.forEach(function (e) {
+      var n = h("div", "note" + (e.flagged ? " flagged" : ""));
+      var meta = h("div", "nmeta");
+      if (e.mood && MOOD[e.mood]) meta.appendChild(h("span","face",MOOD[e.mood]));
+      meta.appendChild(h("span","who","age " + (e.age || "?")));
+      meta.appendChild(h("span","when",(e.ts||"").replace("T"," ").slice(0,16)));
+      if (e.flagged) meta.appendChild(h("span","flag","flagged by filter"));
+      n.appendChild(meta);
+      if (e.summer) {
+        var a = h("div","jline"); a.appendChild(h("b",null,"Summer: "));
+        a.appendChild(document.createTextNode(e.summer)); n.appendChild(a);
+      }
+      if (e.grateful) {
+        var b = h("div","jline"); b.appendChild(h("b",null,"Grateful: "));
+        b.appendChild(document.createTextNode(e.grateful)); n.appendChild(b);
+      }
+      c.appendChild(n);
+    });
+    return c;
+  }
+
   function render() {
     var box = document.getElementById("body");
     box.innerHTML = "";
@@ -251,6 +280,11 @@
     box.appendChild(kpis(d));
     box.appendChild(sectionChart(d));
     box.appendChild(detail(d));
+    box.appendChild(journalCard(
+      VIEW === "today"
+        ? (DATA.journal || []).filter(function (e) { return e.day === DATA.today.date; })
+        : (DATA.journal || [])
+    ));
     box.appendChild(feedbackCard(
       VIEW === "today"
         ? (DATA.feedback || []).filter(function (f) { return f.day === DATA.today.date; })

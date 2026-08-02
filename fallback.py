@@ -204,12 +204,10 @@ WORDLE_WORDS = [
     ("OCEAN", "Bigger than a sea, full of salt water."),
     ("PILOT", "The person flying the plane."),
     ("QUEEN", "She wears the crown."),
-    ("ROBOT", "A machine that can move on its own."),
     ("SHARK", "A fish with a famous fin."),
     ("TOAST", "Bread that has been in the toaster."),
     ("VOICE", "What comes out when you speak or sing."),
     ("WHALE", "The biggest animal in the ocean."),
-    ("ZEBRA", "Black and white stripes on the savanna."),
     ("APPLE", "Red or green, keeps the doctor away."),
     ("BREAD", "You make a sandwich out of it."),
     ("CHAIR", "You sit on it at the table."),
@@ -223,6 +221,45 @@ WORDLE_WORDS = [
     ("NIGHT", "When the sky goes dark."),
     ("PAINT", "You put it on a canvas with a brush."),
     ("SUGAR", "The sweet white stuff in a bowl."),
+]
+
+# Trickier five-letter words for the 11-year-old: repeated letters, awkward
+# letter pairs, less common shapes. Still words a kid genuinely knows.
+HARD_WORDLE_WORDS = [
+    ("PROXY", "A stand-in that acts for someone else."),
+    ("KNACK", "A clever skill you seem to have naturally."),
+    ("GLYPH", "A carved symbol or picture-letter."),
+    ("VIVID", "So bright and clear it almost jumps out at you."),
+    ("EPOXY", "A very strong glue that sets hard."),
+    ("JUMBO", "Extra large."),
+    ("QUIRK", "An odd little habit that makes someone unusual."),
+    ("SWIRL", "A twisting, curling motion."),
+    ("MUMMY", "A body wrapped in cloth in ancient Egypt."),
+    ("ABYSS", "A hole so deep you cannot see the bottom."),
+    ("CRYPT", "A stone room underneath an old building."),
+    ("FJORD", "A long narrow sea inlet between steep cliffs."),
+    ("NYMPH", "A young insect before it becomes an adult."),
+    ("PIXEL", "One of the tiny dots that make up a screen picture."),
+    ("ZEBRA", "Stripy, and no two are patterned alike."),
+    ("WALTZ", "A dance that counts in threes."),
+    ("BUZZY", "Full of energy and noise."),
+    ("LLAMA", "A woolly South American animal that may spit."),
+    ("ONION", "It has layers, and it makes you cry."),
+    ("ROBOT", "A machine built to do a job by itself."),
+    ("SKUNK", "Small, stripy, and famously smelly."),
+    ("TRUCE", "An agreement to stop fighting."),
+    ("VOWEL", "A, E, I, O or U."),
+    ("WHIRL", "To spin round very fast."),
+    ("YACHT", "A posh sailing boat."),
+    ("AMBER", "A golden fossil resin that sometimes traps insects."),
+    ("CHOMP", "To bite down noisily."),
+    ("DWARF", "Much smaller than usual."),
+    ("EMBER", "A glowing piece left after a fire."),
+    ("FROTH", "The bubbly foam on top of a drink."),
+    ("GNOME", "A little garden statue with a pointy hat."),
+    ("HYENA", "A spotted animal whose call sounds like laughing."),
+    ("IVORY", "The creamy white of old piano keys."),
+    ("KAYAK", "A narrow boat you paddle - and a word spelled the same backwards."),
 ]
 
 JOKES = [
@@ -288,12 +325,16 @@ def _idx(day: date, length: int, salt: int = 0) -> int:
 
 def creative_bank(day: date) -> dict:
     word = WORDLE_WORDS[_idx(day, len(WORDLE_WORDS), 3)]
+    hard_word = HARD_WORDLE_WORDS[_idx(day, len(HARD_WORDLE_WORDS), 8)]
     return {
         "word_of_day": WORDS_OF_DAY[_idx(day, len(WORDS_OF_DAY), 0)],
         "math_puzzle": MATH_PUZZLES[_idx(day, len(MATH_PUZZLES), 1)],
         "logic_puzzle": LOGIC_PUZZLES[_idx(day, len(LOGIC_PUZZLES), 2)],
         "connections": CONNECTIONS[_idx(day, len(CONNECTIONS), 4)],
-        "wordle": {"word": word[0], "hint": word[1]},
+        "wordle": {
+            "easy": {"word": word[0], "hint": word[1]},
+            "hard": {"word": hard_word[0], "hint": hard_word[1]},
+        },
         "joke": JOKES[_idx(day, len(JOKES), 5)],
         "on_this_day": ON_THIS_DAY_GENERIC,
     }

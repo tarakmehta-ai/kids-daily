@@ -36,6 +36,7 @@
 <!-- ============ nav ============ -->
 <nav class="nav" aria-label="Jump to a section">
   <div class="nav-inner">
+    <a href="#s-summer">🌞 Check-In</a>
     <a href="#s-news">📰 News</a>
     <a href="#s-sports">🏆 Sports</a>
     <a href="#s-local">🏘️ Local</a>
@@ -58,6 +59,46 @@
   </div>
 
   <main id="content" style="display:none">
+
+    <section id="s-summer">
+      <div class="sec-head">
+        <div class="ico">🌞</div>
+        <div>
+          <h2>Summer Check-In</h2>
+          <p class="sub">Two lines. Then the rest of the page is yours.</p>
+        </div>
+      </div>
+      <div class="card jr">
+        <div class="jr-spark-box">
+          <span class="jr-spark-label">Today's spark</span>
+          <span class="jr-spark" id="jr-spark"></span>
+        </div>
+
+        <div class="jr-q">How are you feeling today?</div>
+        <div class="jr-moods" role="group" aria-label="Pick a mood">
+          <button class="mood" data-mood="sunny" aria-pressed="false">☀️<span>Great</span></button>
+          <button class="mood" data-mood="happy" aria-pressed="false">😄<span>Happy</span></button>
+          <button class="mood" data-mood="calm" aria-pressed="false">😌<span>Calm</span></button>
+          <button class="mood" data-mood="tired" aria-pressed="false">🥱<span>Tired</span></button>
+          <button class="mood" data-mood="meh" aria-pressed="false">😐<span>Meh</span></button>
+        </div>
+
+        <label class="jr-q" for="jr-summer">One sentence about your summer so far</label>
+        <textarea id="jr-summer" rows="2" maxlength="400"
+          placeholder="This summer I..."></textarea>
+
+        <label class="jr-q" for="jr-grateful">One thing you're grateful for today</label>
+        <textarea id="jr-grateful" rows="2" maxlength="400"
+          placeholder="Today I'm grateful for..."></textarea>
+
+        <div class="jr-bar">
+          <span class="jr-note">Only Dad sees this. Your own list stays on this device.</span>
+          <button class="btn primary" id="jr-send">Save it</button>
+        </div>
+        <div class="jr-done" id="jr-done"></div>
+        <div class="jr-past" id="jr-past"></div>
+      </div>
+    </section>
 
     <section id="s-news">
       <div class="sec-head">
@@ -125,15 +166,19 @@
         <div class="ico">🟩</div>
         <div>
           <h2>Guess the Word</h2>
-          <p class="sub">Five letters, six tries</p>
+          <p class="sub">Five letters, six tries. The clue is there if you want it.</p>
         </div>
       </div>
       <div class="game">
-        <p class="hint"><b>Clue</b><span id="wl-hint"></span></p>
+        <div class="wl-cluebar">
+          <button class="btn" id="wl-clue-btn">Stuck? Get a clue</button>
+          <p class="wl-clue" id="wl-hint"></p>
+        </div>
         <div class="wordle-board" id="wl-board"></div>
         <div class="toast" id="wl-toast"></div>
         <div class="streak" id="wl-streak"></div>
         <div class="kb" id="wl-kb"></div>
+        <div class="wl-after" id="wl-after"></div>
       </div>
     </section>
 
@@ -231,6 +276,7 @@
         <label class="fb-q" for="fb-fav">Favourite bit today?</label>
         <select id="fb-fav">
           <option value="">— pick one (optional) —</option>
+          <option value="s-summer">Summer Check-In</option>
           <option value="s-news">Today's News</option>
           <option value="s-sports">Sports</option>
           <option value="s-word">Word of the Day</option>

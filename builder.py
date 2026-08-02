@@ -104,6 +104,13 @@ def valid_connections(c: Any) -> bool:
     return len(seen) == 16
 
 
+def valid_wordle_pair(w: Any) -> bool:
+    """Wordle now has an easy and a hard word, like the other puzzles."""
+    if not isinstance(w, dict):
+        return False
+    return all(valid_wordle(w.get(level)) for level in ("easy", "hard"))
+
+
 def valid_wordle(w: Any) -> bool:
     if not isinstance(w, dict):
         return False
@@ -163,7 +170,7 @@ def _merge_creative(day: date, generated: dict | None) -> tuple[dict, list[str]]
         "math_puzzle": valid_puzzle_pair,
         "logic_puzzle": valid_puzzle_pair,
         "connections": valid_connections,
-        "wordle": valid_wordle,
+        "wordle": valid_wordle_pair,
         "joke": valid_joke,
     }
     for key, check in checks.items():
@@ -175,7 +182,8 @@ def _merge_creative(day: date, generated: dict | None) -> tuple[dict, list[str]]
             used_bank.append(key)
 
     out["connections"] = _normalise_connections(out["connections"])
-    out["wordle"]["word"] = out["wordle"]["word"].strip().upper()
+    for level in ("easy", "hard"):
+        out["wordle"][level]["word"] = out["wordle"][level]["word"].strip().upper()
 
     events = (generated or {}).get("on_this_day")
     if isinstance(events, list) and events:

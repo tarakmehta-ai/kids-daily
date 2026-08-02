@@ -301,6 +301,131 @@ def _push_feedback(day: date) -> None:
     threading.Thread(target=_go, daemon=True).start()
 
 
+# --------------------------------------------------------------------------
+# summer check-in (the gratitude journal at the top of the page)
+# --------------------------------------------------------------------------
+# Same write-only rule as feedback: it goes to the parent dashboard and is
+# never rendered back onto the public page. The kids see their own entries
+# again from localStorage on their own device, which needs no server round trip
+# and can't leak between visitors.
+
+MAX_JOURNAL = 400
+MOODS = {"sunny", "happy", "calm", "tired", "meh"}
+
+
+def _journal_path(day: date) -> Path:
+    return STATS_DIR / f"journal-{day.isoformat()}.jsonl"
+
+
+def record_journal(raw: dict) -> bool:
+    if not isinstance(raw, dict):
+        return False
+    summer = str(raw.get("summer", "") or "").strip()[:MAX_JOURNAL]
+    grateful = str(raw.get("grateful", "") or "").strip()[:MAX_JOURNAL]
+    if not summer and not grateful:
+        return False
+
+    day = today()
+    path = _journal_path(day)
+    try:
+        if path.exists() and sum(1 for _ in path.open(encoding="utf-8")) >= MAX_PER_DAY:
+            return False
+    except Exception:  # noqa: BLE001
+        pass
+
+    age = str(raw.get("age", ""))[:2]
+    mood = str(raw.get("mood", ""))[:8]
+    entry = {
+        "ts": datetime.now(TZ).isoformat(),
+        "age": age if age in ("9", "11") else "?",
+        "mood": mood if mood in MOODS else None,
+        "summer": summer,
+        "grateful": grateful,
+    }
+    try:
+        import safety
+
+        if not safety.is_safe(summer + " " + grateful):
+            entry["flagged"] = True
+    except Exception:  # noqa: BLE001
+        pass
+
+    with _LOCK:
+        try:
+            with path.open("a", encoding="utf-8") as fh:
+                fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        except Exception:  # noqa: BLE001
+            log.exception("could not write journal")
+            return False
+    _push_named(day, _journal_path, "journal")
+    return True
+
+
+def _push_named(day: date, pathfn, folder: str) -> None:
+    creds = _repo()
+    if not creds or not pathfn(day).exists():
+        return
+    repo, token = creds
+
+    def _go():
+        try:
+            from huggingface_hub import HfApi
+
+            HfApi(token=token).upload_file(
+                path_or_fileobj=str(pathfn(day)),
+                path_in_repo=f"{folder}/{day.isoformat()}.jsonl",
+                repo_id=repo, repo_type="dataset",
+            )
+        except Exception as exc:  # noqa: BLE001
+            log.warning("%s push failed: %s", folder, exc)
+
+    threading.Thread(target=_go, daemon=True).start()
+
+
+def read_journal(days: int = 90) -> list[dict]:
+    out: list[dict] = []
+    for i in range(days):
+        d = today() - timedelta(days=i)
+        p = _journal_path(d)
+        if not p.exists():
+            continue
+        for line in p.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                e = json.loads(line)
+                e["day"] = d.isoformat()
+                out.append(e)
+            except json.JSONDecodeError:
+                continue
+    return sorted(out, key=lambda e: e.get("ts", ""), reverse=True)
+
+
+def restore_journal(days: int = 90) -> int:
+    creds = _repo()
+    if not creds:
+        return 0
+    repo, token = creds
+    n = 0
+    try:
+        from huggingface_hub import hf_hub_download
+    except Exception:  # noqa: BLE001
+        return 0
+    for i in range(days):
+        d = today() - timedelta(days=i)
+        if _journal_path(d).exists():
+            continue
+        try:
+            src = hf_hub_download(repo_id=repo, filename=f"journal/{d.isoformat()}.jsonl",
+                                  repo_type="dataset", token=token)
+            _journal_path(d).write_text(Path(src).read_text(encoding="utf-8"), encoding="utf-8")
+            n += 1
+        except Exception:  # noqa: BLE001
+            continue
+    return n
+
+
 def read_feedback(days: int = 60) -> list[dict]:
     out: list[dict] = []
     for i in range(days):

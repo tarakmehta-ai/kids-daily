@@ -8,6 +8,7 @@ Endpoints
     POST /api/refresh   force a rebuild (needs ADMIN_TOKEN)
     POST /api/track     engagement events from the page (open, validated hard)
     POST /api/feedback  a note from the kids (open, write-only)
+    POST /api/journal   the summer check-in (open, write-only)
     GET  /stats         parent dashboard (needs ADMIN_TOKEN)
     GET  /api/stats.json  the same data as JSON (needs ADMIN_TOKEN)
 """
@@ -58,8 +59,10 @@ def _hide_answers(payload: dict) -> dict:
                 for field in ("answer", "solution"):
                     if node.get(field):
                         node[field] = _enc(node[field])
-    if out.get("wordle", {}).get("word"):
-        out["wordle"]["word"] = _enc(out["wordle"]["word"])
+    for level in ("easy", "hard"):
+        node = (out.get("wordle") or {}).get(level)
+        if isinstance(node, dict) and node.get("word"):
+            node["word"] = _enc(node["word"])
     if out.get("joke", {}).get("punchline"):
         out["joke"]["punchline"] = _enc(out["joke"]["punchline"])
     # The page needs the solution to check answers, but it shouldn't be sitting
@@ -172,6 +175,17 @@ async def feedback(request: Request):
     return JSONResponse({"ok": bool(ok)})
 
 
+@app.post("/api/journal")
+async def journal(request: Request):
+    """The summer check-in. Write-only, exactly like feedback."""
+    try:
+        body = await request.json()
+    except Exception:  # noqa: BLE001
+        return JSONResponse({"ok": False})
+    ok = analytics.record_journal(body if isinstance(body, dict) else {})
+    return JSONResponse({"ok": bool(ok)})
+
+
 @app.get("/api/stats.json")
 def stats_json(token: str = Query(...), day: str | None = Query(None)):
     _require_admin(token)
@@ -186,6 +200,7 @@ def stats_json(token: str = Query(...), day: str | None = Query(None)):
         "today": analytics.daily(d),
         "overall": analytics.overall(),
         "feedback": analytics.read_feedback(),
+        "journal": analytics.read_journal(),
     }
 
 
@@ -212,6 +227,7 @@ def warm_cache():
         try:
             analytics.restore()          # pull stats back after a restart
             analytics.restore_feedback()
+            analytics.restore_journal()
             builder.get_day()
             log.info("warm-up complete")
         except Exception:  # noqa: BLE001

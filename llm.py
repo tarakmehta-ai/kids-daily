@@ -176,7 +176,10 @@ Produce this exact JSON structure:
       {{"name": "...", "words": ["...","...","...","..."], "difficulty": 4}}
     ]
   }},
-  "wordle": {{"word": "FIVE-letter word in CAPS that a 9-year-old knows", "hint": "a gentle one-line clue"}},
+  "wordle": {{
+    "easy": {{"word": "FIVE-letter word in CAPS", "hint": "a clue, only shown if they ask", "fact": "one short interesting line about the word, shown after they solve it"}},
+    "hard": {{"word": "FIVE-letter word in CAPS", "hint": "...", "fact": "..."}}
+  }},
   "joke": {{"setup": "...", "punchline": "...", "type": "pun / knock-knock / riddle"}},
   "on_this_day": [
     {{"year": 1969, "headline": "short punchy title", "blurb": "2-3 sentences a kid finds genuinely interesting", "why_cool": "one line on why it still matters"}}
@@ -188,8 +191,15 @@ Requirements:
   be solvable by kids (animals, sports, food, school, space, Minecraft, music,
   words that precede "ball", etc). difficulty 1 = most obvious, 4 = trickiest.
   Include at least one word that looks like it belongs in the wrong group.
-- wordle: a common concrete noun/verb/adjective. No plurals ending in S, no
-  proper nouns, no repeated-letter words harder than "APPLE".
+- wordle.easy: a word a 9-year-old definitely knows, but NOT the most obvious
+  choice - avoid APPLE, HOUSE, WATER, HAPPY and similar starter words. Aim for
+  something they know but would not guess first, e.g. CRISP, BLINK, GHOST.
+- wordle.hard: genuinely trickier for an 11-year-old - repeated letters,
+  awkward letter pairs, or a less common shape (PROXY, KNACK, ABYSS, FJORD).
+  Still a real word they would recognise once they see it.
+- Both: no plurals ending in S, no proper nouns.
+- wordle fact: one genuinely interesting sentence about the word - its origin,
+  or a surprising detail. Shown only after they solve it, as the reward.
 - on_this_day: exactly 3 entries, drawn from the verified list where possible.
   Prefer science, sport, exploration, invention and culture. Skip anything
   about war, disaster or death.

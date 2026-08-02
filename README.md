@@ -15,7 +15,7 @@ Spaces now requires a paid plan for anything that runs compute.
 | Around West Windsor | Local NJ feeds, filtered hard (see below) |
 | Word of the day | Claude |
 | Math + logic puzzles | Claude, at two difficulty levels (age 9 / age 11 toggle) |
-| Guess the Word | Our own Wordle-style game, kid-level daily word |
+| Guess the Word | Our own Wordle-style game. Two word tiers (age 9 / age 11), the clue is hidden behind a button, and solving reveals a fact about the word plus a shareable emoji grid |
 | Make Four Groups | Our own Connections-style grid |
 | Sudoku | Generated algorithmically in `sudoku.py` — 6x6 for age 9, 9x9 for age 11, uniqueness proved before it ships |
 | On this day | Wikimedia On-This-Day API, retold by Claude |
@@ -122,6 +122,18 @@ community news is dropped.
 **An empty local section is the expected outcome most days**, and the page says
 so in plain language rather than looking broken. That is the design. If you'd
 rather see more there, widen `LOCAL_TOPICS` — do not weaken the blocklist.
+
+## Summer Check-In
+
+The first card on the page asks for one sentence about their summer and one
+thing they're grateful for, plus a mood button and a rotating daily "spark"
+question so it isn't the same blank box every morning.
+
+Entries are **write-only to the server**, exactly like feedback — they appear in
+your dashboard and never on the public page. Separately, each entry is kept in
+that browser's `localStorage`, so the kid sees their own summer list growing
+underneath the form. That needs no server round trip and can't leak between
+visitors.
 
 ## Sudoku and streaks
 

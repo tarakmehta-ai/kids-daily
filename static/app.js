@@ -417,16 +417,18 @@
       var st = STREAK.win("wordle");
       wlToast("You got it! 🎉");
       paintStreak("wordle", "wl-streak");
+      wlFinish(true);
       TRACK.push({ type: "wordle_result", section: "s-wordle", won: true,
                    guesses: WL.guesses.length, streak: st.streak });
     } else if (WL.guesses.length >= 6) {
       WL.done = true;
       wlToast("The word was " + WL.answer);
+      wlFinish(false);
       TRACK.push({ type: "wordle_result", section: "s-wordle", won: false, guesses: 6 });
     } else {
       wlToast("");
     }
-    store("wordle", { guesses: WL.guesses, done: WL.done });
+    store("wordle-" + wlLevel(), { guesses: WL.guesses, done: WL.done });
     wlDrawBoard();
   }
 
@@ -469,27 +471,77 @@
     });
   }
 
+  function wlLevel() { return AGE === "11" ? "hard" : "easy"; }
+
+  function wlShareGrid() {
+    // The emoji grid people post from real Wordle. Pure fun, and it gives a
+    // reason to come back and beat yesterday.
+    var out = [];
+    WL.guesses.forEach(function (g) {
+      out.push(wlScore(g, WL.answer).map(function (s) {
+        return s === "correct" ? "🟩" : s === "present" ? "🟨" : "⬜";
+      }).join(""));
+    });
+    return "Kids Daily " + DATA.date + "  " + WL.guesses.length + "/6\n" + out.join("\n");
+  }
+
+  function wlFinish(won) {
+    var box = $("#wl-after");
+    box.innerHTML = "";
+    var node = (DATA.wordle || {})[wlLevel()] || {};
+    if (won && node.fact) box.appendChild(el("p", "wl-fact", node.fact));
+    var grid = el("pre", "wl-share", wlShareGrid());
+    box.appendChild(grid);
+    var copy = el("button", "reveal", "Copy my score");
+    copy.addEventListener("click", function () {
+      try {
+        navigator.clipboard.writeText(wlShareGrid());
+        copy.textContent = "Copied!";
+      } catch (e) { copy.textContent = "Select the squares above to copy"; }
+    });
+    box.appendChild(copy);
+    box.classList.add("show");
+  }
+
   function renderWordle() {
-    WL.answer = dec((DATA.wordle || {}).word).toUpperCase();
+    var node = (DATA.wordle || {})[wlLevel()] || {};
+    WL.answer = dec(node.word).toUpperCase();
     WL.guesses = []; WL.current = ""; WL.done = false;
-    var saved = load("wordle");
+    var saved = load("wordle-" + wlLevel());
     if (saved && Array.isArray(saved.guesses)) {
       WL.guesses = saved.guesses;
       WL.done = !!saved.done;
     }
-    $("#wl-hint").textContent = (DATA.wordle || {}).hint || "";
+    // The clue used to sit on screen permanently, which is most of why this
+    // felt too easy. It is now behind a button, so asking for it is a choice.
+    var clue = $("#wl-hint"), btn = $("#wl-clue-btn");
+    clue.textContent = "";
+    clue.classList.remove("show");
+    btn.style.display = "";
+    btn.textContent = "Stuck? Get a clue";
+    btn.onclick = function () {
+      clue.textContent = node.hint || "";
+      clue.classList.add("show");
+      btn.style.display = "none";
+    };
+    $("#wl-after").innerHTML = "";
+    $("#wl-after").classList.remove("show");
     wlBuildKeyboard();
     wlDrawBoard();
     if (WL.done) {
-      wlToast(WL.guesses[WL.guesses.length - 1] === WL.answer
-        ? "You got it! 🎉" : "The word was " + WL.answer);
+      var wonAlready = WL.guesses[WL.guesses.length - 1] === WL.answer;
+      wlToast(wonAlready ? "You got it! 🎉" : "The word was " + WL.answer);
+      wlFinish(wonAlready);
     }
+    if (!WL.keysBound) {
+      WL.keysBound = true;
     document.addEventListener("keydown", function (ev) {
       if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
       if (ev.key === "Enter") wlKey("ENTER");
       else if (ev.key === "Backspace") wlKey("BACK");
       else if (/^[a-zA-Z]$/.test(ev.key)) wlKey(ev.key.toUpperCase());
     });
+    }
   }
 
   // ---------- connections ----------
@@ -801,6 +853,110 @@
     sdDraw();
   }
 
+  // ---------- summer check-in ----------
+  // Playful daily spark so it isn't the same blank box every morning.
+  var SPARKS = [
+    "What made you laugh today?",
+    "What did you do today that yesterday-you would be surprised by?",
+    "Best thing you ate this week?",
+    "What is something you got better at this summer?",
+    "If today had a title, what would it be?",
+    "What is one small thing that went right?",
+    "Who made your day easier today?",
+    "What did you notice outside today?"
+  ];
+
+  function jrKey() { return "kd-journal"; }
+  function jrAll() {
+    try { return JSON.parse(lsGet(jrKey())) || []; } catch (e) { return []; }
+  }
+  function jrSave(list) { lsSet(jrKey(), JSON.stringify(list.slice(-60))); }
+
+  function jrPaintScrapbook() {
+    var box = $("#jr-past");
+    if (!box) return;
+    var mine = jrAll();
+    box.innerHTML = "";
+    if (!mine.length) return;
+    box.appendChild(el("div", "jr-past-title", "Your summer so far (" + mine.length + " " +
+      (mine.length === 1 ? "entry" : "entries") + ")"));
+    mine.slice().reverse().slice(0, 6).forEach(function (e) {
+      var row = el("div", "jr-past-row");
+      row.appendChild(el("span", "jr-past-day", e.day));
+      row.appendChild(el("span", "jr-past-text",
+        (e.mood ? MOOD_EMOJI[e.mood] + " " : "") + (e.grateful || e.summer || "")));
+      box.appendChild(row);
+    });
+  }
+
+  var MOOD_EMOJI = { sunny: "☀️", happy: "😄", calm: "😌", tired: "🥱", meh: "😐" };
+
+  function initJournal() {
+    var summer = $("#jr-summer"), grateful = $("#jr-grateful"), send = $("#jr-send");
+    if (!summer || !send) return;
+    var mood = null;
+
+    // one spark per day, same for both kids
+    var seed = 0, ds = DATA.date;
+    for (var i = 0; i < ds.length; i++) seed = (seed * 31 + ds.charCodeAt(i)) >>> 0;
+    $("#jr-spark").textContent = SPARKS[seed % SPARKS.length];
+
+    document.querySelectorAll(".mood").forEach(function (b) {
+      b.addEventListener("click", function () {
+        mood = (mood === b.dataset.mood) ? null : b.dataset.mood;
+        document.querySelectorAll(".mood").forEach(function (x) {
+          x.setAttribute("aria-pressed", String(x.dataset.mood === mood));
+        });
+      });
+    });
+
+    var done = $("#jr-done");
+    var already = jrAll().some(function (e) { return e.day === DATA.date && e.age === AGE; });
+    if (already) {
+      done.textContent = "You already checked in today. Write again if you like!";
+      done.className = "jr-done show";
+    }
+
+    send.addEventListener("click", function () {
+      if (!summer.value.trim() && !grateful.value.trim()) {
+        done.textContent = "Write a little something first 🙂";
+        done.className = "jr-done show err";
+        return;
+      }
+      send.disabled = true; send.textContent = "Saving…";
+      var entry = {
+        summer: summer.value, grateful: grateful.value,
+        mood: mood, age: AGE, day: DATA.date
+      };
+      fetch("/api/journal", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(entry)
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (r) {
+          if (!r.ok) throw new Error("not saved");
+          // Keep a copy on this device so they can read their own summer back.
+          var mine = jrAll(); mine.push(entry); jrSave(mine);
+          done.textContent = "Saved. Dad can see it — and it is in your summer list below.";
+          done.className = "jr-done show";
+          summer.value = ""; grateful.value = "";
+          mood = null;
+          document.querySelectorAll(".mood").forEach(function (x) {
+            x.setAttribute("aria-pressed", "false");
+          });
+          jrPaintScrapbook();
+          send.textContent = "Saved";
+          setTimeout(function () { send.disabled = false; send.textContent = "Add another"; }, 1400);
+        })
+        .catch(function () {
+          done.textContent = "Couldn't save that — try again in a moment.";
+          done.className = "jr-done show err";
+          send.disabled = false; send.textContent = "Save it";
+        });
+    });
+    jrPaintScrapbook();
+  }
+
   // ---------- boot ----------
   function setAge(age) {
     AGE = age;
@@ -809,7 +965,7 @@
     document.querySelectorAll(".agebtn").forEach(function (b) {
       b.setAttribute("aria-pressed", String(b.dataset.age === age));
     });
-    if (DATA) { renderPuzzles(); renderSudoku(); }
+    if (DATA) { renderPuzzles(); renderSudoku(); renderWordle(); }
   }
 
   // Highlight the nav pill for whichever section is currently in view, and
@@ -904,6 +1060,7 @@
     initScrollSpy();
     initDwell();
     initFeedback();
+    initJournal();
   }
 
   document.addEventListener("DOMContentLoaded", function () {

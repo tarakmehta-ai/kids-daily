@@ -587,6 +587,96 @@ a { color: var(--brand); }
 
 .empty { color: var(--ink-3); font-style: italic; }
 
+/* ======================= summer check-in ======================= */
+.jr {
+  max-width: 680px;
+  background:
+    radial-gradient(130% 140% at 0% 0%, #fff8e6 0%, rgba(255, 248, 230, 0) 55%),
+    var(--card);
+  border-left: 4px solid var(--sun);
+}
+.jr-spark-box {
+  background: #fff6e0; border: 1px dashed #f0cf8a;
+  border-radius: var(--r-sm); padding: 12px 14px; margin-bottom: 18px;
+}
+.jr-spark-label {
+  display: block; font-size: .68rem; font-weight: 800; letter-spacing: .1em;
+  text-transform: uppercase; color: #b07d12; margin-bottom: 3px;
+}
+.jr-spark { font-weight: 700; color: var(--ink); }
+.jr-q {
+  display: block; font-weight: 700; font-size: .93rem;
+  margin: 16px 0 8px; color: var(--ink);
+}
+.jr-moods { display: flex; gap: 8px; flex-wrap: wrap; }
+.mood {
+  flex: 1 1 74px; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  border: 1px solid var(--line); background: #fff; color: var(--ink-2);
+  padding: 9px 6px; border-radius: var(--r-sm);
+  font: inherit; font-size: 1.3rem; cursor: pointer;
+  transition: all .15s ease;
+}
+.mood span { font-size: .7rem; font-weight: 700; }
+.mood:hover { border-color: var(--sun); }
+.mood[aria-pressed="true"] {
+  background: var(--sun); border-color: var(--sun); color: #fff;
+  box-shadow: 0 4px 12px rgba(243, 167, 18, .3);
+}
+.jr textarea {
+  width: 100%; font: inherit; color: var(--ink);
+  border: 1px solid var(--line); border-radius: var(--r-sm);
+  padding: 11px 13px; background: #fff; resize: vertical;
+}
+.jr textarea:focus { outline: 2px solid var(--sun); outline-offset: 1px; border-color: var(--sun); }
+.jr-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-top: 16px; flex-wrap: wrap;
+}
+.jr-note { font-size: .78rem; color: var(--ink-3); }
+.jr .btn.primary { background: var(--sun); color: #4a2f00; border-color: var(--sun); font-weight: 800; }
+.jr .btn.primary:hover:not(:disabled) { background: #e09400; }
+.jr-done {
+  display: none; margin-top: 14px; padding: 12px 14px;
+  background: #fff6e0; border-left: 3px solid var(--sun);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0; font-weight: 600; color: #7a5200;
+}
+.jr-done.show { display: block; animation: pop .25s ease; }
+.jr-done.err { background: #fdeeee; border-left-color: #c0392b; color: #a5322a; }
+.jr-past { margin-top: 18px; }
+.jr-past-title {
+  font-size: .72rem; font-weight: 800; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--ink-3); margin-bottom: 8px;
+}
+.jr-past-row {
+  display: flex; gap: 10px; align-items: baseline;
+  padding: 6px 0; border-bottom: 1px solid var(--line-2); font-size: .88rem;
+}
+.jr-past-row:last-child { border-bottom: 0; }
+.jr-past-day { color: var(--ink-3); font-size: .76rem; flex: 0 0 76px; font-variant-numeric: tabular-nums; }
+.jr-past-text { color: var(--ink-2); }
+
+/* ======================= wordle clue + finish ======================= */
+.wl-cluebar { text-align: center; margin-bottom: 12px; }
+.wl-cluebar .btn {
+  background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .3);
+  color: #cfe0f0; font-size: .82rem; padding: 7px 16px;
+}
+.wl-clue {
+  display: none; margin: 10px auto 0; max-width: 460px;
+  color: #cfe0f0; font-size: .95rem; font-style: italic;
+}
+.wl-clue.show { display: block; animation: pop .25s ease; }
+.wl-after { display: none; text-align: center; margin-top: 16px; }
+.wl-after.show { display: block; animation: pop .3s ease; }
+.wl-fact {
+  color: #cfe0f0; font-size: .93rem; max-width: 480px; margin: 0 auto 12px;
+}
+.wl-share {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1.05rem; line-height: 1.25; margin: 0 0 12px;
+  color: #fff; letter-spacing: 2px;
+}
+
 /* ======================= feedback ======================= */
 .fb { max-width: 640px; }
 .fb-q {
