@@ -124,6 +124,11 @@ PHRASES = [
     "dying", "dead body", "murdering", "raping", "beheads", "abducted",
     "violence", "violent", "jailed for", "arrested on", "arrested for",
     "charged with", "convicted of", "sentenced to", "on trial for",
+    # "charged" alone would kill "the electric car charged in 10 minutes" and
+    # "charged down the wing", so only the criminal constructions are listed.
+    "charged following", "charged after", "charged over", "charged in connection",
+    "faces charges", "facing charges", "criminal charges", "charges filed",
+    "pressed charges", "brings charges", "charge sheet",
 ]
 
 # Violent-sounding language that is completely routine in a game report. These

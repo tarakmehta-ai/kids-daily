@@ -62,6 +62,12 @@ def _hide_answers(payload: dict) -> dict:
         out["wordle"]["word"] = _enc(out["wordle"]["word"])
     if out.get("joke", {}).get("punchline"):
         out["joke"]["punchline"] = _enc(out["joke"]["punchline"])
+    # The page needs the solution to check answers, but it shouldn't be sitting
+    # in plain sight in the network tab.
+    for level in ("easy", "hard"):
+        node = (out.get("sudoku") or {}).get(level)
+        if isinstance(node, dict) and node.get("solution"):
+            node["solution"] = _enc(",".join(str(v) for v in node["solution"]))
     out["_encoded"] = True
     return out
 

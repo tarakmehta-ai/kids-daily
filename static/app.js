@@ -53,6 +53,66 @@
     return { push: push, flush: flush, elapsed: elapsed };
   })();
 
+  // ---------- streaks ----------
+  // One streak per game, per browser. Stored against the CONTENT date, so it
+  // follows the 8pm rollover rather than the wall clock. Sharing a laptop means
+  // sharing a streak - the age toggle sets puzzle difficulty, not identity.
+  var STREAK = (function () {
+    function key(game) { return "kd-streak-" + game; }
+    function read(game) {
+      try {
+        var v = JSON.parse(lsGet(key(game)));
+        if (v && typeof v.streak === "number") return v;
+      } catch (e) {}
+      return { last: null, streak: 0, best: 0 };
+    }
+    function prevDay(iso) {
+      var d = new Date(iso + "T12:00:00");   // midday avoids any DST edge
+      d.setDate(d.getDate() - 1);
+      return d.toISOString().slice(0, 10);
+    }
+    // Called on a win. Idempotent: solving twice in a day doesn't double-count.
+    function win(game) {
+      var st = read(game), today = DATA.date;
+      if (st.last === today) return st;
+      st.streak = (st.last === prevDay(today)) ? st.streak + 1 : 1;
+      st.last = today;
+      st.best = Math.max(st.best || 0, st.streak);
+      lsSet(key(game), JSON.stringify(st));
+      return st;
+    }
+    // A streak is only "live" if it was kept today or yesterday.
+    function current(game) {
+      var st = read(game);
+      if (!st.last) return 0;
+      if (st.last === DATA.date || st.last === prevDay(DATA.date)) return st.streak;
+      return 0;
+    }
+    function best(game) { return read(game).best || 0; }
+    return { win: win, current: current, best: best, read: read };
+  })();
+
+  function paintStreak(game, elId) {
+    var box = $("#" + elId);
+    if (!box) return;
+    var cur = STREAK.current(game), bst = STREAK.best(game);
+    box.innerHTML = "";
+    if (!cur && !bst) {
+      box.appendChild(el("span", "streak-none", "Solve it to start a streak"));
+      return;
+    }
+    if (cur > 0) {
+      var pill = el("span", "streak-pill");
+      pill.appendChild(el("span", "flame", "🔥"));
+      pill.appendChild(document.createTextNode(
+        cur + (cur === 1 ? " day" : " days") + " in a row"));
+      box.appendChild(pill);
+    } else {
+      box.appendChild(el("span", "streak-none", "Streak broken - start again today"));
+    }
+    if (bst > 0) box.appendChild(el("span", "streak-best", "best " + bst));
+  }
+
   // ---------- helpers ----------
   function $(sel, root) { return (root || document).querySelector(sel); }
   function el(tag, cls, text) {
@@ -354,8 +414,11 @@
     WL.current = "";
     if (won) {
       WL.done = true;
+      var st = STREAK.win("wordle");
       wlToast("You got it! 🎉");
-      TRACK.push({ type: "wordle_result", section: "s-wordle", won: true, guesses: WL.guesses.length });
+      paintStreak("wordle", "wl-streak");
+      TRACK.push({ type: "wordle_result", section: "s-wordle", won: true,
+                   guesses: WL.guesses.length, streak: st.streak });
     } else if (WL.guesses.length >= 6) {
       WL.done = true;
       wlToast("The word was " + WL.answer);
@@ -496,8 +559,11 @@
       CN.selected = [];
       if (CN.solved.length === 4) {
         CN.done = true;
+        var cst = STREAK.win("groups");
         cnToast("All four! Brilliant. 🌟");
-        TRACK.push({ type: "conn_result", section: "s-conn", solved: true, mistakes: CN.mistakes });
+        paintStreak("groups", "cn-streak");
+        TRACK.push({ type: "conn_result", section: "s-conn", solved: true,
+                     mistakes: CN.mistakes, streak: cst.streak });
       }
       else cnToast("Correct!");
     } else {
@@ -599,6 +665,142 @@
     });
   }
 
+  // ---------- sudoku ----------
+  var SD = { size: 6, boxR: 2, boxC: 3, given: [], cells: [], sol: [], sel: -1, done: false, level: "easy" };
+
+  function sdPuzzle() {
+    var all = DATA.sudoku;
+    if (!all) return null;
+    return all[AGE === "11" ? "hard" : "easy"] || null;
+  }
+
+  function sdConflicts() {
+    // Which filled cells clash with a peer. Shown live - for a 9-year-old,
+    // finding out at the end that move six was wrong is just demoralising.
+    var n = SD.size, bad = {};
+    function scan(idxs) {
+      var seen = {};
+      idxs.forEach(function (i) {
+        var v = SD.cells[i];
+        if (!v) return;
+        if (seen[v] !== undefined) { bad[i] = 1; bad[seen[v]] = 1; }
+        else seen[v] = i;
+      });
+    }
+    var r, c, i, group;
+    for (r = 0; r < n; r++) {
+      group = []; for (c = 0; c < n; c++) group.push(r * n + c); scan(group);
+    }
+    for (c = 0; c < n; c++) {
+      group = []; for (r = 0; r < n; r++) group.push(r * n + c); scan(group);
+    }
+    for (var br = 0; br < n; br += SD.boxR) {
+      for (var bc = 0; bc < n; bc += SD.boxC) {
+        group = [];
+        for (var dr = 0; dr < SD.boxR; dr++)
+          for (var dc = 0; dc < SD.boxC; dc++) group.push((br + dr) * n + (bc + dc));
+        scan(group);
+      }
+    }
+    return bad;
+  }
+
+  function sdSave() {
+    store("sudoku-" + SD.level, { cells: SD.cells, done: SD.done });
+  }
+
+  function sdDraw() {
+    var grid = $("#sd-grid");
+    if (!grid) return;
+    var n = SD.size;
+    grid.style.gridTemplateColumns = "repeat(" + n + ", 1fr)";
+    grid.className = "sd-grid n" + n;
+    grid.innerHTML = "";
+    var bad = sdConflicts();
+    for (var i = 0; i < n * n; i++) {
+      var b = el("button", "sd-cell");
+      var r = Math.floor(i / n), c = i % n;
+      if (SD.given[i]) b.classList.add("given");
+      if (i === SD.sel) b.classList.add("sel");
+      if (bad[i] && !SD.given[i]) b.classList.add("bad");
+      if ((c + 1) % SD.boxC === 0 && c !== n - 1) b.classList.add("br");
+      if ((r + 1) % SD.boxR === 0 && r !== n - 1) b.classList.add("bb");
+      b.textContent = SD.cells[i] ? String(SD.cells[i]) : "";
+      b.disabled = SD.done;
+      (function (idx) {
+        b.addEventListener("click", function () {
+          if (SD.done || SD.given[idx]) return;
+          SD.sel = (SD.sel === idx) ? -1 : idx;
+          sdDraw();
+        });
+      })(i);
+      grid.appendChild(b);
+    }
+
+    var pad = $("#sd-pad");
+    pad.innerHTML = "";
+    for (var v = 1; v <= n; v++) {
+      var k = el("button", "sd-key", String(v));
+      (function (val) {
+        k.addEventListener("click", function () { sdPlace(val); });
+      })(v);
+      k.disabled = SD.done;
+      pad.appendChild(k);
+    }
+    var er = el("button", "sd-key wide", "Erase");
+    er.addEventListener("click", function () { sdPlace(0); });
+    er.disabled = SD.done;
+    pad.appendChild(er);
+  }
+
+  function sdPlace(v) {
+    if (SD.sel < 0 || SD.done || SD.given[SD.sel]) return;
+    SD.cells[SD.sel] = v;
+    sdSave();
+    sdDraw();
+    sdCheck();
+  }
+
+  function sdCheck() {
+    for (var i = 0; i < SD.cells.length; i++) {
+      if (!SD.cells[i] || SD.cells[i] !== SD.sol[i]) return;
+    }
+    SD.done = true;
+    SD.sel = -1;
+    sdSave();
+    var st = STREAK.win("sudoku");
+    $("#sd-toast").textContent = "Solved it! 🎉";
+    paintStreak("sudoku", "sd-streak");
+    TRACK.push({ type: "sudoku_result", section: "s-sudoku", solved: true, streak: st.streak });
+    sdDraw();
+  }
+
+  function renderSudoku() {
+    var section = document.getElementById("s-sudoku");
+    var pz = sdPuzzle();
+    if (!pz) { if (section) section.style.display = "none"; return; }
+    if (section) section.style.display = "";
+
+    SD.level = AGE === "11" ? "hard" : "easy";
+    SD.size = pz.size; SD.boxR = pz.box_r; SD.boxC = pz.box_c;
+    SD.given = pz.puzzle.map(function (v) { return v !== 0; });
+    SD.cells = pz.puzzle.slice();
+    SD.sol = String(dec(pz.solution)).split(",").map(Number);
+    SD.sel = -1; SD.done = false;
+
+    var saved = load("sudoku-" + SD.level);
+    if (saved && Array.isArray(saved.cells) && saved.cells.length === SD.cells.length) {
+      SD.cells = saved.cells;
+      SD.done = !!saved.done;
+    }
+    $("#sd-hint").textContent = SD.size === 6
+      ? "Fill every row, column and 2x3 box with 1 to 6."
+      : "Fill every row, column and 3x3 box with 1 to 9.";
+    $("#sd-toast").textContent = SD.done ? "Solved it! 🎉" : "";
+    paintStreak("sudoku", "sd-streak");
+    sdDraw();
+  }
+
   // ---------- boot ----------
   function setAge(age) {
     AGE = age;
@@ -607,7 +809,7 @@
     document.querySelectorAll(".agebtn").forEach(function (b) {
       b.setAttribute("aria-pressed", String(b.dataset.age === age));
     });
-    if (DATA) renderPuzzles();
+    if (DATA) { renderPuzzles(); renderSudoku(); }
   }
 
   // Highlight the nav pill for whichever section is currently in view, and
@@ -693,6 +895,9 @@
     renderPuzzles();
     renderWordle();
     renderConnections();
+    renderSudoku();
+    paintStreak("wordle", "wl-streak");
+    paintStreak("groups", "cn-streak");
     renderHistory();
     renderJoke();
     renderStory();

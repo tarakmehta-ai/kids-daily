@@ -40,11 +40,11 @@ ENABLED = os.environ.get("ANALYTICS", "on").strip().lower() not in ("off", "0", 
 # Anything not in here is dropped, so a stray POST can't bloat the log.
 EVENT_TYPES = {
     "view", "session", "reveal", "joke_reveal", "wordle_result",
-    "conn_result", "link_click", "age_switch",
+    "conn_result", "sudoku_result", "link_click", "age_switch",
 }
 SECTIONS = {
     "s-news", "s-sports", "s-local", "s-word", "s-brain", "s-wordle",
-    "s-conn", "s-history", "s-joke", "s-story", "s-feedback",
+    "s-conn", "s-sudoku", "s-history", "s-joke", "s-story", "s-feedback",
 }
 SECTION_LABELS = {
     "s-news": "Today's News",
@@ -55,6 +55,7 @@ SECTION_LABELS = {
     "s-brain": "Brain Teasers",
     "s-wordle": "Guess the Word",
     "s-conn": "Make Four Groups",
+    "s-sudoku": "Sudoku",
     "s-history": "On This Day",
     "s-joke": "Joke of the Day",
     "s-story": "Story of the Day",
@@ -103,7 +104,8 @@ def _clean_event(raw: dict) -> dict | None:
     if secs > 0:
         ev["seconds"] = round(min(max(secs, 0.0), 3600.0), 1)
 
-    for key, cast, cap in (("guesses", int, 10), ("mistakes", int, 10)):
+    for key, cast, cap in (("guesses", int, 10), ("mistakes", int, 10),
+                           ("streak", int, 400), ("seconds_taken", int, 7200)):
         if raw.get(key) is not None:
             try:
                 ev[key] = min(max(cast(raw[key]), 0), cap)
@@ -382,6 +384,8 @@ def summarise(events: list[dict]) -> dict:
     links: dict[str, int] = defaultdict(int)
     wordle = {"played": 0, "won": 0, "guesses": []}
     conn = {"played": 0, "solved": 0, "mistakes": []}
+    sud = {"played": 0, "solved": 0}
+    streaks: dict[str, int] = {}
     age_seen: dict[str, int] = defaultdict(int)
 
     for e in events:
@@ -415,6 +419,14 @@ def summarise(events: list[dict]) -> dict:
                 conn["solved"] += 1
             if e.get("mistakes") is not None:
                 conn["mistakes"].append(int(e["mistakes"]))
+        elif t == "sudoku_result":
+            sud["played"] += 1
+            if e.get("solved"):
+                sud["solved"] += 1
+        GAME_OF = {"wordle_result": "wordle", "conn_result": "groups",
+                   "sudoku_result": "sudoku"}
+        if e.get("streak") and t in GAME_OF:
+            streaks[GAME_OF[t]] = max(streaks.get(GAME_OF[t], 0), int(e["streak"]))
 
     ranked = sorted(section_secs.items(), key=lambda kv: kv[1], reverse=True)
     grand = sum(section_secs.values()) or 1.0
@@ -441,6 +453,8 @@ def summarise(events: list[dict]) -> dict:
             "avg_guesses": round(sum(wordle["guesses"]) / len(wordle["guesses"]), 1)
             if wordle["guesses"] else None,
         },
+        "sudoku": {"played": sud["played"], "solved": sud["solved"]},
+        "best_streaks": streaks,
         "connections": {
             "played": conn["played"],
             "solved": conn["solved"],

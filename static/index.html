@@ -43,6 +43,7 @@
     <a href="#s-brain">🧠 Brain</a>
     <a href="#s-wordle">🟩 Guess</a>
     <a href="#s-conn">🔗 Groups</a>
+    <a href="#s-sudoku">🔢 Sudoku</a>
     <a href="#s-history">🕰️ History</a>
     <a href="#s-joke">😄 Joke</a>
     <a href="#s-story">💛 Story</a>
@@ -131,6 +132,7 @@
         <p class="hint"><b>Clue</b><span id="wl-hint"></span></p>
         <div class="wordle-board" id="wl-board"></div>
         <div class="toast" id="wl-toast"></div>
+        <div class="streak" id="wl-streak"></div>
         <div class="kb" id="wl-kb"></div>
       </div>
     </section>
@@ -146,6 +148,7 @@
       <div class="game">
         <div class="conn-grid" id="cn-grid"></div>
         <div class="toast" id="cn-toast"></div>
+        <div class="streak" id="cn-streak"></div>
         <div class="conn-bar">
           <div class="mistakes">Mistakes left <span id="cn-dots" style="display:flex;gap:7px"></span></div>
           <div style="display:flex;gap:9px;flex-wrap:wrap">
@@ -154,6 +157,25 @@
             <button class="btn primary" id="cn-submit">Submit</button>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section id="s-sudoku">
+      <div class="sec-head">
+        <div class="ico">🔢</div>
+        <div>
+          <h2>Sudoku</h2>
+          <p class="sub">Age 9 gets a 6x6 grid, age 11 gets the full 9x9</p>
+        </div>
+      </div>
+      <div class="game">
+        <p class="hint"><b>How to play</b><span id="sd-hint"></span></p>
+        <div class="sd-wrap">
+          <div class="sd-grid" id="sd-grid"></div>
+        </div>
+        <div class="toast" id="sd-toast"></div>
+        <div class="streak" id="sd-streak"></div>
+        <div class="sd-pad" id="sd-pad"></div>
       </div>
     </section>
 
@@ -215,6 +237,7 @@
           <option value="s-brain">Brain Teasers</option>
           <option value="s-wordle">Guess the Word</option>
           <option value="s-conn">Make Four Groups</option>
+          <option value="s-sudoku">Sudoku</option>
           <option value="s-history">On This Day</option>
           <option value="s-joke">Joke of the Day</option>
           <option value="s-story">Story of the Day</option>

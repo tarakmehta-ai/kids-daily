@@ -459,6 +459,76 @@ a { color: var(--brand); }
   font-weight: 700; font-size: .93rem; color: #fff; margin: 10px 0;
 }
 
+/* ======================= sudoku ======================= */
+.sd-wrap { display: flex; justify-content: center; margin: 4px 0 10px; }
+.sd-grid {
+  display: grid;
+  width: 100%; max-width: 380px;
+  gap: 2px;
+  background: rgba(255, 255, 255, .14);
+  border: 2px solid rgba(255, 255, 255, .5);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.sd-grid.n9 { max-width: 440px; }
+.sd-cell {
+  aspect-ratio: 1 / 1; min-width: 0;
+  border: 0; border-radius: 0;
+  background: rgba(255, 255, 255, .07);
+  color: #cfe0f0;
+  font-family: "Outfit", sans-serif; font-weight: 700;
+  font-size: clamp(.85rem, 4.4vw, 1.4rem);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; padding: 0;
+  transition: background .12s ease;
+}
+.sd-grid.n9 .sd-cell { font-size: clamp(.7rem, 3.2vw, 1.15rem); }
+.sd-cell:hover:not(:disabled):not(.given) { background: rgba(255, 255, 255, .17); }
+/* the thicker lines that mark the boxes */
+.sd-cell.br { box-shadow: inset -2px 0 0 rgba(255, 255, 255, .45); }
+.sd-cell.bb { box-shadow: inset 0 -2px 0 rgba(255, 255, 255, .45); }
+.sd-cell.br.bb { box-shadow: inset -2px 0 0 rgba(255, 255, 255, .45), inset 0 -2px 0 rgba(255, 255, 255, .45); }
+.sd-cell.given { background: rgba(255, 255, 255, .2); color: #fff; cursor: default; }
+.sd-cell.sel { background: var(--brand); color: #fff; }
+.sd-cell.bad { background: #c0392b; color: #fff; }
+
+.sd-pad {
+  display: flex; flex-wrap: wrap; gap: 7px;
+  justify-content: center; max-width: 440px; margin: 0 auto;
+}
+.sd-key {
+  flex: 1 1 44px; max-width: 64px; height: clamp(42px, 11vw, 50px);
+  border: 0; border-radius: 9px;
+  background: rgba(255, 255, 255, .16); color: #fff;
+  font-family: "Outfit", sans-serif; font-weight: 700;
+  font-size: clamp(.95rem, 3.6vw, 1.2rem); cursor: pointer;
+  transition: background .15s ease, transform .1s ease;
+}
+.sd-key:hover:not(:disabled) { background: rgba(255, 255, 255, .28); }
+.sd-key:active:not(:disabled) { transform: scale(.94); }
+.sd-key.wide { flex: 1 1 90px; max-width: 110px; font-size: .8rem; }
+.sd-key:disabled { opacity: .4; cursor: default; }
+
+/* ======================= streaks ======================= */
+.streak {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; flex-wrap: wrap; margin: 2px 0 14px;
+  min-height: 26px;
+}
+.streak-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: #fff; font-weight: 800; font-size: .84rem;
+  padding: 5px 14px; border-radius: 999px;
+  box-shadow: 0 3px 12px rgba(239, 68, 68, .3);
+}
+.streak-pill .flame { font-size: .95rem; }
+.streak-best {
+  font-size: .76rem; font-weight: 700; letter-spacing: .05em;
+  text-transform: uppercase; color: #9db4cc;
+}
+.streak-none { font-size: .8rem; color: #8ba3bb; font-style: italic; }
+
 /* ======================= on this day ======================= */
 #local .card {
   background:

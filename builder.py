@@ -28,6 +28,7 @@ import fallback
 import llm
 import safety
 import sources
+import sudoku
 
 log = logging.getLogger("kidsdaily.builder")
 
@@ -287,8 +288,20 @@ def build(day: date) -> dict:
     news, bank_news = _merge_news(day, news_raw)
     empty_sections = news.pop("_empty_sections", [])
 
+    # Sudoku is generated algorithmically, not by the model: a puzzle is only a
+    # puzzle if the solution is unique, and that must be proved, not hoped for.
+    try:
+        puzzles = sudoku.daily(day)
+        if not (sudoku.is_valid(puzzles["easy"]) and sudoku.is_valid(puzzles["hard"])):
+            log.error("generated sudoku failed validation - omitting the section")
+            puzzles = None
+    except Exception:  # noqa: BLE001
+        log.exception("sudoku generation failed")
+        puzzles = None
+
     payload = {
         "date": day.isoformat(),
+        "sudoku": puzzles,
         "date_pretty": day.strftime("%A, %B %d, %Y").replace(" 0", " "),
         "generated_at": datetime.now(TZ).isoformat(),
         **creative,
