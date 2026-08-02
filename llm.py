@@ -39,6 +39,52 @@ def _client():
     return anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
 
+def _salvage_json(text: str) -> Any | None:
+    """Recover the largest valid prefix of a truncated JSON object.
+
+    A response cut off at max_tokens ends mid-structure and json.loads rejects
+    the whole thing - which threw away six perfectly good news sections in
+    production because the seventh was half-written. This walks the text,
+    remembers every point where the structure could legally be closed, then
+    works backwards closing the open brackets until something parses.
+    """
+    start = text.find("{")
+    if start < 0:
+        return None
+    s = text[start:]
+
+    stack: list[str] = []
+    safe: list[tuple[int, tuple[str, ...]]] = []
+    in_str = esc = False
+    for i, ch in enumerate(s):
+        if in_str:
+            if esc:
+                esc = False
+            elif ch == "\\":
+                esc = True
+            elif ch == '"':
+                in_str = False
+            continue
+        if ch == '"':
+            in_str = True
+        elif ch in "{[":
+            stack.append(ch)
+        elif ch in "}]":
+            if stack:
+                stack.pop()
+            safe.append((i, tuple(stack)))
+        elif ch == ",":
+            safe.append((i - 1, tuple(stack)))
+
+    for i, st in reversed(safe):
+        closers = "".join("}" if c == "{" else "]" for c in reversed(st))
+        try:
+            return json.loads(s[: i + 1] + closers)
+        except (json.JSONDecodeError, ValueError):
+            continue
+    return None
+
+
 def _extract_json(text: str) -> Any:
     """Pull a JSON object out of a model response, fenced or bare."""
     fenced = re.findall(r"```(?:json)?\s*(.*?)```", text, re.S)
@@ -51,6 +97,10 @@ def _extract_json(text: str) -> Any:
             return json.loads(cand)
         except json.JSONDecodeError:
             continue
+    salvaged = _salvage_json(text)
+    if isinstance(salvaged, dict) and salvaged:
+        log.warning("recovered a truncated JSON response (%d keys)", len(salvaged))
+        return salvaged
     raise ValueError("no parseable JSON in model response")
 
 
@@ -149,7 +199,7 @@ Requirements:
     try:
         msg = _client().messages.create(
             model=MODEL,
-            max_tokens=8000,
+            max_tokens=12000,
             system=HOUSE_RULES,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -266,7 +316,9 @@ Rules:
 
     kwargs: dict[str, Any] = {
         "model": MODEL,
-        "max_tokens": 8000,
+        # Six news sections plus a multi-paragraph feel-good story. At 8000
+        # this truncated in production and the whole day's news was lost.
+        "max_tokens": 20000,
         "system": HOUSE_RULES,
         "messages": [{"role": "user", "content": prompt}],
     }
@@ -275,14 +327,32 @@ Rules:
             {"type": "web_search_20250305", "name": "web_search", "max_uses": 6}
         ]
 
-    try:
-        msg = _client().messages.create(**kwargs)
-        data = _extract_json(_text_of(msg))
-        LLM_LOG["news"] = "claude ok" + (
-            f" (web search used for: {', '.join(missing)})" if use_search else " (from RSS)"
-        )
-        return data
-    except Exception as exc:  # noqa: BLE001
-        log.exception("news editing failed")
-        LLM_LOG["news"] = f"claude failed ({type(exc).__name__}) - using bank"
-        return None
+    last_err = None
+    for attempt in (1, 2):
+        try:
+            msg = _client().messages.create(**kwargs)
+            stop = getattr(msg, "stop_reason", "?")
+            data = _extract_json(_text_of(msg))
+            note = "claude ok" + (
+                f" (web search used for: {', '.join(missing)})" if use_search else " (from RSS)"
+            )
+            if stop == "max_tokens":
+                note += " [hit max_tokens - response was salvaged]"
+            if attempt > 1:
+                note += " [succeeded on retry]"
+            LLM_LOG["news"] = note
+            return data
+        except Exception as exc:  # noqa: BLE001
+            last_err = exc
+            log.warning("news editing attempt %d failed: %s", attempt, exc)
+            # One retry, asking for a tighter response so it fits comfortably.
+            kwargs["messages"] = [{
+                "role": "user",
+                "content": prompt + "\n\nIMPORTANT: your previous reply was cut off "
+                           "before the JSON finished. Keep every summary to 2 short "
+                           "sentences and the feelgood story to 3 short paragraphs so "
+                           "the JSON completes.",
+            }]
+    log.error("news editing failed twice", exc_info=last_err)
+    LLM_LOG["news"] = f"claude failed ({type(last_err).__name__}) - using bank"
+    return None
