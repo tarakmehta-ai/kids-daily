@@ -92,6 +92,9 @@ Visit `https://<your-service>.onrender.com/health`:
 - `blocked_by_filter` counts what the safety filter dropped today. Small
   non-zero numbers mean it's working. If it's `{}` every day, be suspicious
   rather than reassured.
+- `freshness_relaxed` names any section where nothing new was available and the
+  no-repeats rule had to be relaxed to avoid rendering a blank card. Seeing
+  `cricket` in there during an off-week is normal.
 
 Then open the site and play both games through once.
 
@@ -283,8 +286,38 @@ Budget **under $2** in practice.
 **Force a rebuild** (a bad joke slipped through):
 
 ```bash
-curl -X POST "https://<your-service>.onrender.com/api/refresh?token=<ADMIN_TOKEN>"
+# 1. wake the service first, so the rebuild isn't racing a cold start
+curl -s -o /dev/null -w "awake: %%{http_code}\n" \
+  "https://<your-service>.onrender.com/health"
+
+# 2. kick off the rebuild - returns straight away with 202
+curl -sS -X POST -w "\nHTTP %%{http_code}\n" \
+  "https://<your-service>.onrender.com/api/refresh?token=<ADMIN_TOKEN>"
+
+# 3. watch it finish (generated_at will change, usually 20-40s later)
+curl -s "https://<your-service>.onrender.com/api/refresh/status?token=<ADMIN_TOKEN>"
 ```
+
+**If curl prints a wall of HTML**, it is not coming from this app — every error
+this app produces is JSON. It is Render's edge proxy, and it means one of:
+
+- the service was **asleep** and the request hit the wake-up page. Run the
+  `/health` call first and retry.
+- a **deploy was in progress**. Wait for it to go green in the dashboard.
+- the request **outran Render's proxy timeout**. This used to happen because
+  `/api/refresh` rebuilt everything before replying; it now returns 202
+  immediately and rebuilds in the background, so it should not recur. If you
+  want the old blocking behaviour, add `&wait=true` — and expect HTML if it
+  runs long.
+
+To see what you actually got rather than a screenful of markup:
+
+```bash
+curl -s -o /dev/null -w "%%{http_code} %%{content_type}\n" -X POST \
+  "https://<your-service>.onrender.com/api/refresh?token=<ADMIN_TOKEN>"
+```
+
+`202 application/json` is success. Anything with `text/html` is Render, not us.
 
 **Deploy a change.** Push to `main`; Render rebuilds automatically.
 

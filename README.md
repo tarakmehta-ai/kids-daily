@@ -106,13 +106,27 @@ exactly the same safety filter as every other source, but fan-blog articles
 carry comment threads, and comment threads are not moderated to a 9-year-old's
 standard. The filter cannot see them. Worth knowing before they click through.
 
-## No repeats across days
+## No repeats across days (without blank sections)
 
 `builder.recent_signatures()` reads the previous 7 cached days and collects
-every headline signature and link already used. Those items are filtered out of
-the raw feeds *before* the model sees them, listed in the prompt as
-"already used", and filtered again on the way out — because the model can
-restate a story in different words.
+every headline signature and link already used. Those are listed in the prompt
+as "already used", and `prefer_fresh()` applies them in **tiers** at both the
+feed stage and the model-output stage:
+
+1. items never seen before — ideal
+2. failing that, items whose **URL** is new (headline may be similar)
+3. failing that, everything — a stale card beats a blank one
+
+This started life as a hard filter and blanked all four sports sections on day
+two: those feeds barely move, so once the previous day had used the top
+stories, everything remaining looked like a repeat. Freshness is a preference
+now, never a guillotine. `/health` reports `freshness_relaxed` naming any
+section that had to drop a tier.
+
+Feeds also **aggregate** rather than first-wins: `sources.fetch_feed()` merges
+items from every candidate feed for a topic, de-duplicated, up to 20. Eagles
+now draws on six feeds rather than one, which is what makes tier 1 achievable
+most days.
 
 The feel-good story has an extra bar: it must be at least 700 characters and
 come from a dedicated good-news outlet (Good News Network, Positive News,

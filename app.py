@@ -5,7 +5,8 @@ Endpoints
     GET  /api/today     today's payload (built on first hit, then cached)
     GET  /api/day/{d}   a specific YYYY-MM-DD, if we still have it
     GET  /health        which sources worked, what fell back to the bank
-    POST /api/refresh   force a rebuild (needs ADMIN_TOKEN)
+    POST /api/refresh   force a rebuild in the background (needs ADMIN_TOKEN)
+    GET  /api/refresh/status  how that rebuild is going (needs ADMIN_TOKEN)
     POST /api/track     engagement events from the page (open, validated hard)
     POST /api/feedback  a note from the kids (open, write-only)
     POST /api/journal   the summer check-in (open, write-only)
@@ -124,6 +125,9 @@ def health():
         # Empty but expected - notably westwindsor, which is empty most days
         # because the local topical gate is deliberately strict.
         "empty_sections": diag.get("empty_sections", []),
+        # Sections where nothing new was available and the freshness rule had
+        # to be relaxed rather than render a blank card.
+        "freshness_relaxed": diag.get("freshness_relaxed", {}),
         "links_mode": diag.get("links_mode"),
         "blocked_by_filter": diag.get("blocked_by_filter", {}),
         "sources": diag.get("sources", {}),
@@ -131,11 +135,55 @@ def health():
     }
 
 
+# A full rebuild is 8 feed fetches plus two Claude calls - 20-40s warm, longer
+# on a cold instance. Doing that inline meant the request outlived Render's
+# proxy timeout and the caller got Render's HTML 502 back, even though the
+# rebuild itself was fine. So it now runs in the background and returns at once.
+_REBUILD = {"active": False, "started": None, "finished": None, "error": None}
+
+
 @app.post("/api/refresh")
-def refresh(token: str = Query(...)):
+def refresh(token: str = Query(...), wait: bool = Query(False)):
     _require_admin(token)
-    payload = builder.get_day(force=True)
-    return {"rebuilt": payload["date"], "diagnostics": payload["diagnostics"]}
+
+    if wait:
+        # Old blocking behaviour, if you'd rather watch it happen.
+        payload = builder.get_day(force=True)
+        return {"rebuilt": payload["date"], "diagnostics": payload["diagnostics"]}
+
+    if _REBUILD["active"]:
+        return JSONResponse(
+            {"status": "already rebuilding", "started": _REBUILD["started"]},
+            status_code=202,
+        )
+
+    def _go():
+        _REBUILD.update(active=True, error=None,
+                        started=datetime.now(builder.TZ).isoformat(), finished=None)
+        try:
+            builder.get_day(force=True)
+        except Exception as exc:  # noqa: BLE001
+            _REBUILD["error"] = f"{type(exc).__name__}: {exc}"
+            log.exception("forced rebuild failed")
+        finally:
+            _REBUILD.update(active=False,
+                            finished=datetime.now(builder.TZ).isoformat())
+
+    threading.Thread(target=_go, daemon=True).start()
+    return JSONResponse(
+        {
+            "status": "rebuilding in the background",
+            "for_date": builder.today().isoformat(),
+            "check": "/health - watch generated_at change, usually 20-40s",
+        },
+        status_code=202,
+    )
+
+
+@app.get("/api/refresh/status")
+def refresh_status(token: str = Query(...)):
+    _require_admin(token)
+    return dict(_REBUILD)
 
 
 # --------------------------------------------------------------------------

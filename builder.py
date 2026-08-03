@@ -48,6 +48,9 @@ LINKS_MODE = os.environ.get("LINKS_MODE", "allowlist").strip().lower()
 # is observable rather than a black box.
 DROPPED: dict[str, int] = {}
 
+# Which sections had to relax the freshness rule today, and how far.
+FRESHNESS: dict[str, str] = {}
+
 # One build at a time. Without this, two kids loading the page at 7am would
 # each kick off a full generation (and each cost an API call).
 _LOCK = threading.Lock()
@@ -240,14 +243,19 @@ def _merge_news(
                         continue
                 elif not safety.is_safe(blob, sports=is_sport):
                     continue
-                # The model can restate a story we already ran. Catch it here
-                # as well as at the feed stage.
-                if _is_repeat(i.get("headline", ""), i.get("link", ""), seen_heads, seen_links):
-                    continue
+
                 # A link that fails screening is removed, but the story stays -
                 # the summary on the page is the point, not the click-through.
                 i["link"] = safety.safe_url(i.get("link", ""), mode=LINKS_MODE)
                 clean.append(i)
+            # The model can restate a story we already ran. Prefer the fresh
+            # ones, but never let this empty the section.
+            if clean:
+                clean, tier = prefer_fresh(
+                    clean, seen_heads, seen_links, title_key="headline"
+                )
+                if tier != "fresh":
+                    FRESHNESS[key] = tier
             DROPPED[key] = len(items) - len(clean)
             out[key] = clean
         else:
@@ -284,6 +292,7 @@ def build(day: date) -> dict:
     sources.SOURCE_LOG.clear()
     llm.LLM_LOG.clear()
     DROPPED.clear()
+    FRESHNESS.clear()
 
     all_events = sources.fetch_on_this_day(day)
     raw_events = safety.scrub_events(all_events)
@@ -296,11 +305,10 @@ def build(day: date) -> dict:
     feeds = {}
     for key, items in raw_feeds.items():
         before = len(items)
-        items = [
-            i for i in items
-            if not _is_repeat(i.get("title", ""), i.get("link", ""), seen_heads, seen_links)
-        ]
+        items, tier = prefer_fresh(items, seen_heads, seen_links)
         DROPPED["repeats_from_previous_days"] += before - len(items)
+        if tier != "fresh" and before:
+            FRESHNESS[key] = tier
         kept = safety.filter_items(
             items,
             sports=key in ("eagles", "nfl", "tennis", "cricket"),
@@ -345,6 +353,7 @@ def build(day: date) -> dict:
             "fell_back_to_bank": sorted(set(bank_creative + bank_news)),
             "empty_sections": empty_sections,
             "blocked_by_filter": {k: v for k, v in DROPPED.items() if v},
+            "freshness_relaxed": dict(FRESHNESS),
             "links_mode": LINKS_MODE,
         },
     }
@@ -402,10 +411,43 @@ def recent_signatures(
     return heads, links, titles
 
 
+def _is_same_article(link: str, links: set[str]) -> bool:
+    """The identical URL. Always a repeat, no exceptions."""
+    return bool(link) and link.split("?")[0] in links
+
+
 def _is_repeat(text: str, link: str, heads: set[str], links: set[str]) -> bool:
-    if link and link.split("?")[0] in links:
+    if _is_same_article(link, links):
         return True
     return _sig(text) in heads
+
+
+def prefer_fresh(items: list[dict], heads: set[str], links: set[str],
+                 title_key: str = "title", link_key: str = "link") -> tuple[list[dict], str]:
+    """Prefer unseen items, but never return an empty list.
+
+    De-duplication started as a hard filter and blanked all four sports
+    sections on day two: those feeds barely move, so once yesterday used the
+    top stories, everything left looked like a repeat. Freshness is a
+    preference now, applied in tiers:
+
+        1. items never seen before          - ideal
+        2. failing that, items whose URL is new (headline may be similar)
+        3. failing that, everything         - a stale card beats a blank one
+    """
+    def link_of(i): return i.get(link_key, "") or ""
+    def title_of(i): return i.get(title_key, "") or ""
+
+    fresh = [i for i in items
+             if not _is_repeat(title_of(i), link_of(i), heads, links)]
+    if fresh:
+        return fresh, "fresh"
+
+    new_url = [i for i in items if not _is_same_article(link_of(i), links)]
+    if new_url:
+        return new_url, "same-topic, new article"
+
+    return items, "nothing new today - reusing"
 
 
 def _cache_path(day: date) -> Path:

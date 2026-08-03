@@ -94,16 +94,43 @@ def parse_rss(xml_text: str, limit: int = 8) -> list[dict[str, str]]:
     return items
 
 
-def fetch_feed(key: str, urls: list[str], limit: int = 8) -> list[dict[str, str]]:
-    """Try each candidate URL in order; return items from the first that works."""
+def _key_of(item: dict) -> str:
+    link = (item.get("link") or "").split("?")[0]
+    return link or re.sub(r"[^a-z0-9]+", "", item.get("title", "").lower())[:60]
+
+
+def fetch_feed(key: str, urls: list[str], limit: int = 20) -> list[dict[str, str]]:
+    """Merge items from EVERY candidate feed, in order, de-duplicated.
+
+    This used to return the first feed that answered. That kept the pool tiny -
+    8 items for a whole topic - and once cross-day de-duplication was added,
+    slow-moving sports feeds ran dry and the section rendered blank. Pulling
+    from all of them widens the pool enough that there is usually something new.
+    """
+    merged: list[dict[str, str]] = []
+    seen: set[str] = set()
+    worked: list[str] = []
+
     for url in urls:
         text = _get(url)
         if not text:
             continue
         items = parse_rss(text, limit=limit)
-        if items:
-            _note(key, f"rss ok ({len(items)} items) from {url.split('?')[0]}")
-            return items
+        if not items:
+            continue
+        worked.append(url.split("?")[0].replace("https://", ""))
+        for it in items:
+            k = _key_of(it)
+            if k and k not in seen:
+                seen.add(k)
+                merged.append(it)
+        if len(merged) >= limit:
+            break
+
+    if merged:
+        _note(key, f"rss ok ({len(merged)} items from {len(worked)} feed(s): "
+                   f"{', '.join(w.split('/')[0] for w in worked)})")
+        return merged[:limit]
     _note(key, "rss failed - falling back to Claude web search")
     return []
 
@@ -125,32 +152,33 @@ FEEDS: dict[str, list[str]] = {
         google_news("news for kids"),
     ],
     "eagles": [
-        # Bleeding Green Nation - SB Nation's Eagles site. Two candidate paths
-        # because the feed URL is unverified from the build environment.
         "https://www.bleedinggreennation.com/rss/index.xml",
-        "https://www.bleedinggreennation.com/rss/current.xml",
+        "https://www.philadelphiaeagles.com/rss/news",
+        "https://www.inquirer.com/arc/outboundfeeds/rss/category/sports/eagles/",
         "https://www.espn.com/espn/rss/nfl/news",
         google_news("Philadelphia Eagles"),
+        google_news("Eagles Jalen Hurts OR Nick Sirianni"),
     ],
     "tennis": [
-        # BBC Sport first: links land on bbc.co.uk, which is allowlisted, and
-        # the feed is reliably reachable. ESPN's tennis feed went stale and did
-        # not respond from Render on the first live run, so it sits behind.
         "https://feeds.bbci.co.uk/sport/tennis/rss.xml",
         "https://www.espn.com/espn/rss/tennis/news",
+        "https://www.skysports.com/rss/12040",
         google_news("tennis ATP WTA"),
+        google_news("tennis result final champion"),
     ],
     "cricket": [
         "https://www.espncricinfo.com/rss/content/story/feeds/6.xml",
+        "https://www.espncricinfo.com/rss/content/story/feeds/0.xml",
+        "https://feeds.bbci.co.uk/sport/cricket/rss.xml",
         google_news("India cricket team", hl="en-IN", gl="IN", ceid="IN:en"),
+        google_news("India cricket match result", hl="en-IN", gl="IN", ceid="IN:en"),
     ],
     "nfl": [
-        # ESPN first for US-centric, current coverage. BBC second because its
-        # links are allowlisted and BBC feeds are reliably reachable from
-        # Render. Google News last (its links get stripped).
         "https://www.espn.com/espn/rss/nfl/news",
         "https://feeds.bbci.co.uk/sport/american-football/rss.xml",
+        "https://www.nfl.com/feeds/rss/news",
         google_news("NFL football"),
+        google_news("NFL training camp OR preseason"),
     ],
     "westwindsor": [
         # Local news for West Windsor Township, Mercer County NJ. None of these
