@@ -18,10 +18,27 @@ from __future__ import annotations
 import random
 from datetime import date
 
-# size -> (box_rows, box_cols, givens_to_leave)
+# Difficulty here is NOT mainly about how many clues you leave. It is about
+# which solving techniques the puzzle demands. A 9x9 with 37 clues can still
+# require candidate-pair reasoning or trial and error, which is where an
+# 11-year-old gets stuck and gives up.
+#
+# So every puzzle we ship is guaranteed solvable using only the two techniques
+# a child can actually see:
+#     naked single  - this cell has only one possible digit
+#     hidden single - this digit has only one possible home in its row/col/box
+# No guessing, no backtracking, ever. Clue count then tunes how much work it is
+# WITHIN that guarantee.
+#
+# size -> (box_rows, box_cols, target clues to leave)
 SPECS = {
-    6: {"box_r": 2, "box_c": 3, "givens": 20},
-    9: {"box_r": 3, "box_c": 3, "givens": 38},
+    # age 9: fewer clues than before (was 20) so there is more to do, but the
+    # singles-only guarantee keeps every step findable.
+    6: {"box_r": 2, "box_c": 3, "givens": 15},
+    # age 11: more clues than before (was 38) AND singles-only, which is the
+    # change that actually matters - the old grid could need techniques she had
+    # no way to know.
+    9: {"box_r": 3, "box_c": 3, "givens": 44},
 }
 
 
@@ -41,6 +58,66 @@ def _peers(n: int, box_r: int, box_c: int) -> list[list[int]]:
         s.discard(i)
         peers.append(sorted(s))
     return peers
+
+
+def _units(n: int, box_r: int, box_c: int) -> list[list[int]]:
+    """Every row, column and box, as lists of cell indices."""
+    units = []
+    for r in range(n):
+        units.append([r * n + c for c in range(n)])
+    for c in range(n):
+        units.append([r * n + c for r in range(n)])
+    for br in range(0, n, box_r):
+        for bc in range(0, n, box_c):
+            units.append([(br + dr) * n + (bc + dc)
+                          for dr in range(box_r) for dc in range(box_c)])
+    return units
+
+
+def solve_with_singles(
+    puzzle: list[int], n: int, peers: list[list[int]], units: list[list[int]]
+) -> tuple[bool, int]:
+    """Solve using ONLY naked and hidden singles.
+
+    Returns (solved, steps). If this returns False the puzzle needs something
+    cleverer than a child should have to invent, and we don't ship it.
+    """
+    grid = puzzle[:]
+    steps = 0
+    while True:
+        progress = False
+
+        # naked singles: a cell with exactly one candidate left
+        for i in range(n * n):
+            if grid[i]:
+                continue
+            used = {grid[p] for p in peers[i] if grid[p]}
+            opts = [v for v in range(1, n + 1) if v not in used]
+            if len(opts) == 1:
+                grid[i] = opts[0]
+                steps += 1
+                progress = True
+            elif not opts:
+                return False, steps  # contradiction
+
+        # hidden singles: a digit with exactly one possible home in a unit
+        for unit in units:
+            for v in range(1, n + 1):
+                if any(grid[i] == v for i in unit):
+                    continue
+                spots = [
+                    i for i in unit
+                    if not grid[i] and v not in {grid[p] for p in peers[i] if grid[p]}
+                ]
+                if len(spots) == 1:
+                    grid[spots[0]] = v
+                    steps += 1
+                    progress = True
+
+        if not progress:
+            break
+
+    return all(grid), steps
 
 
 def _solve(grid: list[int], n: int, peers: list[list[int]], limit: int = 2) -> int:
@@ -101,6 +178,7 @@ def generate(day: date, size: int = 6) -> dict:
     spec = SPECS[size]
     box_r, box_c = spec["box_r"], spec["box_c"]
     peers = _peers(size, box_r, box_c)
+    units = _units(size, box_r, box_c)
 
     # Seed from the date AND the size so the two levels aren't related.
     rng = random.Random(f"kidsdaily-{day.isoformat()}-{size}")
@@ -126,12 +204,19 @@ def generate(day: date, size: int = 6) -> dict:
         saved = [puzzle[c] for c in cells]
         for c in cells:
             puzzle[c] = 0
-        if _solve(puzzle[:], size, peers, limit=2) == 1:
+        # Keep the removal only if the puzzle is still uniquely solvable AND
+        # still solvable by singles alone. Starting from a full grid (trivially
+        # singles-solvable) and only ever removing while that holds means the
+        # guarantee is true by construction, not by luck.
+        unique = _solve(puzzle[:], size, peers, limit=2) == 1
+        gentle = solve_with_singles(puzzle, size, peers, units)[0] if unique else False
+        if unique and gentle:
             blanks += len(cells)
         else:
             for c, v in zip(cells, saved):
                 puzzle[c] = v
 
+    _, steps = solve_with_singles(puzzle, size, peers, units)
     return {
         "size": size,
         "box_r": box_r,
@@ -139,6 +224,9 @@ def generate(day: date, size: int = 6) -> dict:
         "puzzle": puzzle,
         "solution": solution,
         "givens": size * size - blanks,
+        # how many deductions it takes, as a rough "how long will this feel"
+        "steps": steps,
+        "singles_only": True,
     }
 
 
@@ -179,7 +267,11 @@ def is_valid(pz: dict) -> bool:
         for i in range(size * size):
             if puzzle[i] and puzzle[i] != solution[i]:
                 return False
-        # and there must be exactly one way to finish it
-        return _solve(puzzle[:], size, peers, limit=2) == 1
+        # exactly one way to finish it...
+        if _solve(puzzle[:], size, peers, limit=2) != 1:
+            return False
+        # ...and it must be reachable without guessing
+        units = _units(size, box_r, box_c)
+        return solve_with_singles(puzzle, size, peers, units)[0]
     except Exception:  # noqa: BLE001
         return False

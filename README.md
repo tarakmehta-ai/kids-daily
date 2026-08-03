@@ -172,6 +172,22 @@ counts solutions — keeping the clue only if exactly one solution remains.
 `builder.py` re-validates before the puzzle reaches the page. No API cost, no
 failure mode, no network.
 
+**Difficulty is graded by technique, not clue count.** Every puzzle is
+guaranteed solvable using only *naked singles* (a cell with one candidate) and
+*hidden singles* (a digit with one home in its unit) — no guessing, no
+backtracking. That guarantee is true by construction: generation starts from a
+full grid and only removes a clue if the puzzle stays both uniquely solvable
+and singles-solvable.
+
+This matters more than clue count. A 9x9 with 37 clues can still demand
+candidate-pair reasoning, which is where an 11-year-old stalls. Clue count then
+tunes the amount of work *within* that guarantee:
+
+| | grid | clues | deductions |
+|---|---|---|---|
+| age 9 | 6x6 | 14 (was 20) | ~22 |
+| age 11 | 9x9 | 43-44 (was 38) | ~38 |
+
 Sizes follow the existing age toggle: 6x6 (2x3 boxes) for age 9, 9x9 for age 11.
 Conflicts are highlighted live rather than at the end — for a 9-year-old,
 discovering at the finish that move six was wrong is just demoralising.

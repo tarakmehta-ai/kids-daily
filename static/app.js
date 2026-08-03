@@ -845,9 +845,10 @@
       SD.cells = saved.cells;
       SD.done = !!saved.done;
     }
-    $("#sd-hint").textContent = SD.size === 6
-      ? "Fill every row, column and 2x3 box with 1 to 6."
-      : "Fill every row, column and 3x3 box with 1 to 9.";
+    $("#sd-hint").textContent = (SD.size === 6
+      ? "Fill every row, column and 2x3 box with 1 to 6. "
+      : "Fill every row, column and 3x3 box with 1 to 9. ")
+      + "You never have to guess - every square can be worked out.";
     $("#sd-toast").textContent = SD.done ? "Solved it! 🎉" : "";
     paintStreak("sudoku", "sd-streak");
     sdDraw();
