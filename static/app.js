@@ -1023,6 +1023,22 @@
 
   function renderAll() {
     $("#date").textContent = DATA.date_pretty || DATA.date;
+    // With the 8pm rollover the evening shows TOMORROW's page. Without saying
+    // so, doing the puzzle at 8:30pm and again at 9am looks like a repeat -
+    // which is exactly what happened.
+    try {
+      var localToday = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
+        .toISOString().slice(0, 10);
+      var ahead = $("#ahead");
+      if (ahead) {
+        if (DATA.date > localToday) {
+          ahead.textContent = "You're getting tomorrow's page early - it stays this way until 8pm tomorrow";
+          ahead.style.display = "";
+        } else {
+          ahead.style.display = "none";
+        }
+      }
+    } catch (e) {}
     $("#content").style.display = "";
     $("#loading").style.display = "none";
     renderNews();

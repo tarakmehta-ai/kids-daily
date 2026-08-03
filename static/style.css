@@ -167,7 +167,11 @@ h1, h2, h3, .display {
   font-weight: 600; opacity: .95;
   text-shadow: 0 1px 10px rgba(0, 0, 0, .4);
 }
-.hero .tagline { margin: 2px 0 20px; opacity: .82; font-size: .95rem; }
+.hero .tagline { margin: 2px 0 8px; opacity: .82; font-size: .95rem; }
+.hero .ahead {
+  margin: 0 0 18px; font-size: .82rem; font-weight: 700;
+  color: #ffe9b8; opacity: .95;
+}
 
 .agebar { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
 .agebar .lbl {

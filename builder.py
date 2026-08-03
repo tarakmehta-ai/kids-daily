@@ -165,6 +165,38 @@ def _normalise_connections(c: dict) -> dict:
 # build
 # --------------------------------------------------------------------------
 
+def _dedupe_creative(day: date, out: dict, seen: dict[str, set[str]]) -> list[str]:
+    """Replace anything we've already used with an unused bank entry."""
+    swapped: list[str] = []
+
+    for level, salt in (("easy", 3), ("hard", 8)):
+        word = out["wordle"][level]["word"].strip().upper()
+        if word in seen["wordle"]:
+            bank = fallback.WORDLE_WORDS if level == "easy" else fallback.HARD_WORDLE_WORDS
+            pick = _pick_unused(bank, lambda t: t[0], seen["wordle"], day, salt)
+            if pick:
+                out["wordle"][level] = {"word": pick[0], "hint": pick[1],
+                                        "fact": out["wordle"][level].get("fact", "")}
+                swapped.append(f"wordle.{level}")
+                seen["wordle"].add(pick[0])
+
+    if str(out["word_of_day"].get("word", "")).strip().lower() in seen["words"]:
+        pick = _pick_unused(fallback.WORDS_OF_DAY, lambda w: w["word"].lower(),
+                            seen["words"], day, 0)
+        if pick:
+            out["word_of_day"] = pick
+            swapped.append("word_of_day")
+
+    if _sig(out["joke"].get("setup", "")) in seen["jokes"]:
+        pick = _pick_unused(fallback.JOKES, lambda j: _sig(j["setup"]),
+                            seen["jokes"], day, 5)
+        if pick:
+            out["joke"] = pick
+            swapped.append("joke")
+
+    return swapped
+
+
 def _merge_creative(day: date, generated: dict | None) -> tuple[dict, list[str]]:
     bank = fallback.creative_bank(day)
     used_bank: list[str] = []
@@ -299,6 +331,7 @@ def build(day: date) -> dict:
     DROPPED["wikimedia_events"] = len(all_events) - len(raw_events)
 
     seen_heads, seen_links, recent_titles = recent_signatures(day)
+    seen_creative = recent_creative(day)
     DROPPED["repeats_from_previous_days"] = 0
 
     raw_feeds = sources.fetch_all_feeds()
@@ -319,13 +352,16 @@ def build(day: date) -> dict:
         feeds[key] = kept
 
     if llm.have_key():
-        creative_raw = llm.generate_creative(day, raw_events)
+        creative_raw = llm.generate_creative(day, raw_events, avoid=seen_creative)
         news_raw = llm.edit_news(day, feeds, recent_titles=sorted(recent_titles))
     else:
         creative_raw = news_raw = None
         llm.LLM_LOG["creative"] = llm.LLM_LOG["news"] = "no ANTHROPIC_API_KEY - using bank"
 
     creative, bank_creative = _merge_creative(day, creative_raw)
+    # Belt and braces: even with the prompt told what to avoid, swap out
+    # anything that still came back as a repeat.
+    swapped = _dedupe_creative(day, creative, seen_creative)
     news, bank_news = _merge_news(day, news_raw, seen_heads, seen_links)
     empty_sections = news.pop("_empty_sections", [])
 
@@ -354,6 +390,7 @@ def build(day: date) -> dict:
             "empty_sections": empty_sections,
             "blocked_by_filter": {k: v for k, v in DROPPED.items() if v},
             "freshness_relaxed": dict(FRESHNESS),
+            "creative_swapped_to_avoid_repeat": swapped,
             "links_mode": LINKS_MODE,
         },
     }
@@ -448,6 +485,51 @@ def prefer_fresh(items: list[dict], heads: set[str], links: set[str],
         return new_url, "same-topic, new article"
 
     return items, "nothing new today - reusing"
+
+
+# The news sections have had de-duplication for a while. The creative content -
+# Wordle word, joke, word of the day - had none at all: the model is asked for
+# "a word a 9-year-old knows" with no memory of yesterday, out of a small
+# effective vocabulary. Over a 30-day summer that repeats sooner or later.
+
+CREATIVE_MEMORY_DAYS = 21
+
+
+def recent_creative(day: date, back: int = CREATIVE_MEMORY_DAYS) -> dict[str, set[str]]:
+    """Wordle words, words of the day, jokes and category names already used."""
+    out = {"wordle": set(), "words": set(), "jokes": set(), "categories": set()}
+    for i in range(1, back + 1):
+        prev = day - timedelta(days=i)
+        payload = _read_cache(prev) or _pull_from_hub(prev)
+        if not payload:
+            continue
+        w = payload.get("wordle") or {}
+        for level in ("easy", "hard"):
+            node = w.get(level)
+            if isinstance(node, dict) and node.get("word"):
+                out["wordle"].add(str(node["word"]).strip().upper())
+        wod = payload.get("word_of_day") or {}
+        if wod.get("word"):
+            out["words"].add(str(wod["word"]).strip().lower())
+        joke = payload.get("joke") or {}
+        if joke.get("setup"):
+            out["jokes"].add(_sig(joke["setup"]))
+        for g in (payload.get("connections") or {}).get("groups", []):
+            if isinstance(g, dict) and g.get("name"):
+                out["categories"].add(_sig(g["name"]))
+    return out
+
+
+def _pick_unused(bank: list, key_of, used: set, day: date, salt: int):
+    """Deterministically walk the bank for an entry not used recently."""
+    if not bank:
+        return None
+    start = (day.toordinal() + salt) % len(bank)
+    for k in range(len(bank)):
+        item = bank[(start + k) % len(bank)]
+        if key_of(item) not in used:
+            return item
+    return bank[start]   # bank exhausted; unavoidable repeat
 
 
 def _cache_path(day: date) -> Path:
