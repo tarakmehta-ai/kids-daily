@@ -315,6 +315,8 @@ ALLOWED_LINK_DOMAINS = {
     "olympics.com", "mlb.com", "nba.com",
     # local news for West Windsor / Mercer County NJ
     "planetprinceton.com", "patch.com", "tapinto.net", "communitynews.org",
+    # good-news outlets
+    "goodnewsnetwork.org", "positive.news", "reasonstobecheerful.world",
     "nj.com", "njspotlightnews.org", "centraljersey.com",
     # news.google.com is deliberately absent - it is a redirect to a publisher
     # we have not vetted. See GOOGLE_REDIRECT below.

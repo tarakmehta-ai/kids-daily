@@ -239,10 +239,21 @@ def _feed_blob(items: list[dict], limit: int = 6) -> str:
     return "\n".join(lines)
 
 
-def edit_news(day: date, feeds: dict[str, list[dict]]) -> dict | None:
+def edit_news(
+    day: date,
+    feeds: dict[str, list[dict]],
+    recent_titles: list[str] | None = None,
+) -> dict | None:
     """Rewrite real headlines for kids. Uses web search only if feeds are dry."""
     missing = [k for k, v in feeds.items() if not v]
     use_search = bool(missing)
+    recent_blob = ""
+    if recent_titles:
+        recent_blob = (
+            "\n\nALREADY USED IN THE LAST WEEK - do not run any of these again,\n"
+            "and do not run a near-identical retelling of them:\n"
+            + "\n".join("- " + _strip_tags(t)[:160] for t in recent_titles[:60])
+        )
 
     prompt = f"""Today is {day:%A, %B %-d, %Y}. Build today's news section.
 
@@ -273,6 +284,8 @@ FEEL-GOOD / KINDNESS STORIES:
 {_feed_blob(feeds.get("feelgood", []))}
 </feed_data>
 
+{recent_blob}
+
 Return exactly this JSON:
 
 {{
@@ -286,7 +299,7 @@ Return exactly this JSON:
   "westwindsor": [{{"headline": "...", "summary": "2-3 sentences", "link": "...", "source": "..."}}],
   "feelgood": {{
     "title": "...",
-    "story": "4-6 short paragraphs, told like a Reader's Digest piece - real people, real events, warm and specific",
+    "story": "4-6 short paragraphs (at least 700 characters total)",
     "lesson": "one sentence naming the takeaway, without moralising",
     "link": "source url if you have one, else empty string",
     "source": "publication name"
@@ -321,8 +334,21 @@ Rules:
   jargon; if you use a term like "wicket" or "tiebreak", gloss it in brackets.
 - Drop any story that is not appropriate for a 9-year-old, even if that means
   returning fewer items than asked.
-- feelgood must be a TRUE story about real people, not a fable. If you cannot
-  find one, set title to "" and leave the object otherwise empty."""
+- feelgood is the hardest item on the page to get right. It must be a REAL,
+  SPECIFIC story, told properly:
+    * Name the people involved and where it happened. "Someone gave a child an
+      ice cream" is not a story - "Maria Alvarez, who runs a corner shop in
+      Toledo, Ohio..." is. If the source article does not give you names and a
+      place, pick a DIFFERENT article from the list.
+    * Say what actually happened, in order, with real detail: what prompted it,
+      what the person did, what changed afterwards.
+    * At least 700 characters across 4-6 short paragraphs. A three-line
+      summary is not acceptable and will be rejected.
+    * Never pad a thin item to reach the length. If none of the supplied
+      articles has enough substance, set title to "" and leave the object
+      otherwise empty - an honest gap beats a vague story.
+    * No fables, no invented details, no "a man once...". If you cannot verify
+      it from the supplied text, leave it out."""
 
     kwargs: dict[str, Any] = {
         "model": MODEL,

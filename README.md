@@ -106,6 +106,20 @@ exactly the same safety filter as every other source, but fan-blog articles
 carry comment threads, and comment threads are not moderated to a 9-year-old's
 standard. The filter cannot see them. Worth knowing before they click through.
 
+## No repeats across days
+
+`builder.recent_signatures()` reads the previous 7 cached days and collects
+every headline signature and link already used. Those items are filtered out of
+the raw feeds *before* the model sees them, listed in the prompt as
+"already used", and filtered again on the way out — because the model can
+restate a story in different words.
+
+The feel-good story has an extra bar: it must be at least 700 characters and
+come from a dedicated good-news outlet (Good News Network, Positive News,
+Reasons to be Cheerful) rather than a Google News query. The prompt requires
+named people and a named place, and explicitly permits returning nothing rather
+than padding a thin item. `/health` reports `repeats_from_previous_days`.
+
 ## The local news section
 
 `westwindsor` is the strictest section on the site. Small-town feeds are mostly
@@ -125,9 +139,9 @@ rather see more there, widen `LOCAL_TOPICS` — do not weaken the blocklist.
 
 ## Summer Check-In
 
-The first card on the page asks for one sentence about their summer and one
-thing they're grateful for, plus a mood button and a rotating daily "spark"
-question so it isn't the same blank box every morning.
+The first card on the page asks two things only: how they're feeling (five
+mood buttons) and one thing they're grateful for today. Deliberately short —
+a longer form is a form they stop filling in.
 
 Entries are **write-only to the server**, exactly like feedback — they appear in
 your dashboard and never on the public page. Separately, each entry is kept in

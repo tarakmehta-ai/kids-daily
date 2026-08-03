@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import threading
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -203,7 +204,12 @@ def _merge_creative(day: date, generated: dict | None) -> tuple[dict, list[str]]
     return out, used_bank
 
 
-def _merge_news(day: date, generated: dict | None) -> tuple[dict, list[str]]:
+def _merge_news(
+    day: date,
+    generated: dict | None,
+    seen_heads: set[str] | None = None,
+    seen_links: set[str] | None = None,
+) -> tuple[dict, list[str]]:
     bank = fallback.news_bank(day)
     used_bank: list[str] = []
     out: dict[str, Any] = {}
@@ -214,6 +220,8 @@ def _merge_news(day: date, generated: dict | None) -> tuple[dict, list[str]]:
     # train you to ignore the health signal, which defeats its whole point.
     OPTIONAL = {"westwindsor"}
     empty: list[str] = []
+    seen_heads = seen_heads or set()
+    seen_links = seen_links or set()
 
     for key in ("kids_news", "eagles", "nfl", "tennis", "cricket", "westwindsor"):
         items = (generated or {}).get(key)
@@ -231,6 +239,10 @@ def _merge_news(day: date, generated: dict | None) -> tuple[dict, list[str]]:
                     if not safety.is_local_safe(blob):
                         continue
                 elif not safety.is_safe(blob, sports=is_sport):
+                    continue
+                # The model can restate a story we already ran. Catch it here
+                # as well as at the feed stage.
+                if _is_repeat(i.get("headline", ""), i.get("link", ""), seen_heads, seen_links):
                     continue
                 # A link that fails screening is removed, but the story stays -
                 # the summary on the page is the point, not the click-through.
@@ -252,6 +264,10 @@ def _merge_news(day: date, generated: dict | None) -> tuple[dict, list[str]]:
         and fg.get("title")
         and fg.get("story")
         and safety.is_safe(safety.text_of(fg, "title", "story", "lesson", "source"))
+        and not _is_repeat(fg.get("title", ""), fg.get("link", ""), seen_heads, seen_links)
+        # A three-line summary of nothing in particular is not a story. This is
+        # what "stale and incomplete" looked like in practice.
+        and len(str(fg.get("story", ""))) >= 400
     ):
         fg.setdefault("kind", "true")
         fg["link"] = safety.safe_url(fg.get("link", ""), mode=LINKS_MODE)
@@ -273,9 +289,18 @@ def build(day: date) -> dict:
     raw_events = safety.scrub_events(all_events)
     DROPPED["wikimedia_events"] = len(all_events) - len(raw_events)
 
+    seen_heads, seen_links, recent_titles = recent_signatures(day)
+    DROPPED["repeats_from_previous_days"] = 0
+
     raw_feeds = sources.fetch_all_feeds()
     feeds = {}
     for key, items in raw_feeds.items():
+        before = len(items)
+        items = [
+            i for i in items
+            if not _is_repeat(i.get("title", ""), i.get("link", ""), seen_heads, seen_links)
+        ]
+        DROPPED["repeats_from_previous_days"] += before - len(items)
         kept = safety.filter_items(
             items,
             sports=key in ("eagles", "nfl", "tennis", "cricket"),
@@ -287,13 +312,13 @@ def build(day: date) -> dict:
 
     if llm.have_key():
         creative_raw = llm.generate_creative(day, raw_events)
-        news_raw = llm.edit_news(day, feeds)
+        news_raw = llm.edit_news(day, feeds, recent_titles=sorted(recent_titles))
     else:
         creative_raw = news_raw = None
         llm.LLM_LOG["creative"] = llm.LLM_LOG["news"] = "no ANTHROPIC_API_KEY - using bank"
 
     creative, bank_creative = _merge_creative(day, creative_raw)
-    news, bank_news = _merge_news(day, news_raw)
+    news, bank_news = _merge_news(day, news_raw, seen_heads, seen_links)
     empty_sections = news.pop("_empty_sections", [])
 
     # Sudoku is generated algorithmically, not by the model: a puzzle is only a
@@ -329,6 +354,59 @@ def build(day: date) -> dict:
 # --------------------------------------------------------------------------
 # cache
 # --------------------------------------------------------------------------
+
+# --------------------------------------------------------------------------
+# don't repeat yourself
+# --------------------------------------------------------------------------
+# Feeds move slowly. Without this the same Eagles training-camp story and the
+# same feel-good piece appear three mornings running, which is the fastest way
+# to make a daily page feel dead.
+
+DEDUP_DAYS = 7
+_NEWS_KEYS = ("kids_news", "eagles", "nfl", "tennis", "cricket", "westwindsor")
+
+
+def _sig(text: str) -> str:
+    """Loose signature for a headline, so light rewording still matches."""
+    return re.sub(r"[^a-z0-9]+", "", str(text or "").lower())[:60]
+
+
+def recent_signatures(
+    day: date, back: int = DEDUP_DAYS
+) -> tuple[set[str], set[str], set[str]]:
+    """Headline signatures, links and readable titles from the previous days."""
+    heads: set[str] = set()
+    links: set[str] = set()
+    titles: set[str] = set()
+    for i in range(1, back + 1):
+        prev = day - timedelta(days=i)
+        payload = _read_cache(prev)
+        if payload is None:
+            payload = _pull_from_hub(prev)
+        if not payload:
+            continue
+        for key in _NEWS_KEYS:
+            for item in payload.get(key) or []:
+                if isinstance(item, dict):
+                    if item.get("headline"):
+                        heads.add(_sig(item["headline"]))
+                        titles.add(item["headline"])
+                    if item.get("link"):
+                        links.add(item["link"].split("?")[0])
+        fg = payload.get("feelgood")
+        if isinstance(fg, dict) and fg.get("title"):
+            heads.add(_sig(fg["title"]))
+            titles.add(fg["title"])
+            if fg.get("link"):
+                links.add(fg["link"].split("?")[0])
+    return heads, links, titles
+
+
+def _is_repeat(text: str, link: str, heads: set[str], links: set[str]) -> bool:
+    if link and link.split("?")[0] in links:
+        return True
+    return _sig(text) in heads
+
 
 def _cache_path(day: date) -> Path:
     return CACHE_DIR / f"{day.isoformat()}.json"

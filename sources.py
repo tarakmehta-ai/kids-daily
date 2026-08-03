@@ -162,6 +162,12 @@ FEEDS: dict[str, list[str]] = {
         google_news('"West Windsor" OR "Plainsboro" New Jersey'),
     ],
     "feelgood": [
+        # Dedicated good-news outlets first. The old Google News query returned
+        # thin aggregator blurbs with no names or places, which is exactly how
+        # we ended up with a vague "someone gave someone an ice cream" story.
+        "https://www.goodnewsnetwork.org/feed/",
+        "https://www.positive.news/feed/",
+        "https://reasonstobecheerful.world/feed/",
         google_news("heartwarming kindness good news"),
     ],
 }

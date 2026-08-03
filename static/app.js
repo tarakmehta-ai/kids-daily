@@ -854,18 +854,6 @@
   }
 
   // ---------- summer check-in ----------
-  // Playful daily spark so it isn't the same blank box every morning.
-  var SPARKS = [
-    "What made you laugh today?",
-    "What did you do today that yesterday-you would be surprised by?",
-    "Best thing you ate this week?",
-    "What is something you got better at this summer?",
-    "If today had a title, what would it be?",
-    "What is one small thing that went right?",
-    "Who made your day easier today?",
-    "What did you notice outside today?"
-  ];
-
   function jrKey() { return "kd-journal"; }
   function jrAll() {
     try { return JSON.parse(lsGet(jrKey())) || []; } catch (e) { return []; }
@@ -884,7 +872,7 @@
       var row = el("div", "jr-past-row");
       row.appendChild(el("span", "jr-past-day", e.day));
       row.appendChild(el("span", "jr-past-text",
-        (e.mood ? MOOD_EMOJI[e.mood] + " " : "") + (e.grateful || e.summer || "")));
+        (e.mood ? MOOD_EMOJI[e.mood] + " " : "") + (e.grateful || "")));
       box.appendChild(row);
     });
   }
@@ -892,14 +880,9 @@
   var MOOD_EMOJI = { sunny: "☀️", happy: "😄", calm: "😌", tired: "🥱", meh: "😐" };
 
   function initJournal() {
-    var summer = $("#jr-summer"), grateful = $("#jr-grateful"), send = $("#jr-send");
-    if (!summer || !send) return;
+    var grateful = $("#jr-grateful"), send = $("#jr-send");
+    if (!grateful || !send) return;
     var mood = null;
-
-    // one spark per day, same for both kids
-    var seed = 0, ds = DATA.date;
-    for (var i = 0; i < ds.length; i++) seed = (seed * 31 + ds.charCodeAt(i)) >>> 0;
-    $("#jr-spark").textContent = SPARKS[seed % SPARKS.length];
 
     document.querySelectorAll(".mood").forEach(function (b) {
       b.addEventListener("click", function () {
@@ -918,16 +901,13 @@
     }
 
     send.addEventListener("click", function () {
-      if (!summer.value.trim() && !grateful.value.trim()) {
-        done.textContent = "Write a little something first 🙂";
+      if (!grateful.value.trim() && !mood) {
+        done.textContent = "Pick how you're feeling, or write something 🙂";
         done.className = "jr-done show err";
         return;
       }
       send.disabled = true; send.textContent = "Saving…";
-      var entry = {
-        summer: summer.value, grateful: grateful.value,
-        mood: mood, age: AGE, day: DATA.date
-      };
+      var entry = { grateful: grateful.value, mood: mood, age: AGE, day: DATA.date };
       fetch("/api/journal", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(entry)
@@ -939,7 +919,7 @@
           var mine = jrAll(); mine.push(entry); jrSave(mine);
           done.textContent = "Saved. Dad can see it — and it is in your summer list below.";
           done.className = "jr-done show";
-          summer.value = ""; grateful.value = "";
+          grateful.value = "";
           mood = null;
           document.querySelectorAll(".mood").forEach(function (x) {
             x.setAttribute("aria-pressed", "false");
