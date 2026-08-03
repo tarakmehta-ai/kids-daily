@@ -99,7 +99,7 @@ def _key_of(item: dict) -> str:
     return link or re.sub(r"[^a-z0-9]+", "", item.get("title", "").lower())[:60]
 
 
-def fetch_feed(key: str, urls: list[str], limit: int = 20) -> list[dict[str, str]]:
+def fetch_feed(key: str, urls: list[str], limit: int = 24) -> list[dict[str, str]]:
     """Merge items from EVERY candidate feed, in order, de-duplicated.
 
     This used to return the first feed that answered. That kept the pool tiny -
@@ -119,12 +119,25 @@ def fetch_feed(key: str, urls: list[str], limit: int = 20) -> list[dict[str, str
         if not items:
             continue
         worked.append(url.split("?")[0].replace("https://", ""))
+        # Cap each feed's share. Without this a single prolific feed fills the
+        # whole quota and the later feeds, though fetched, get truncated away -
+        # so the pool is still effectively single-source.
+        per_feed = max(8, limit // 2)
+        taken = 0
         for it in items:
+            if taken >= per_feed:
+                break
             k = _key_of(it)
             if k and k not in seen:
                 seen.add(k)
                 merged.append(it)
-        if len(merged) >= limit:
+                taken += 1
+        # Keep going until we have enough items AND at least two sources have
+        # contributed. Stopping at the first full feed meant the extra feeds
+        # were almost never consulted - fine until the day that one feed is
+        # entirely stories we already ran, which is exactly how the sports
+        # sections went blank. Two sources bounds the cost and keeps variety.
+        if len(merged) >= limit and len(worked) >= 2:
             break
 
     if merged:
