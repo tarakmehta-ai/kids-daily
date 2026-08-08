@@ -187,14 +187,46 @@ def _dedupe_creative(day: date, out: dict, seen: dict[str, set[str]]) -> list[st
             out["word_of_day"] = pick
             swapped.append("word_of_day")
 
-    if _sig(out["joke"].get("setup", "")) in seen["jokes"]:
-        pick = _pick_unused(fallback.JOKES, lambda j: _sig(j["setup"]),
+    if _wordkey(out["joke"].get("setup", "")) in seen["jokes"]:
+        pick = _pick_unused(fallback.JOKES, lambda j: _wordkey(j["setup"]),
                             seen["jokes"], day, 5)
         if pick:
             out["joke"] = pick
             swapped.append("joke")
+            seen["jokes"].add(_wordkey(pick["setup"]))
+
+    # Puzzles are swapped as a pair - the bank stores easy and hard together,
+    # and a half-swapped pair would be a worse experience than either.
+    for kind, bank, salt in (("math_puzzle", fallback.MATH_PUZZLES, 1),
+                             ("logic_puzzle", fallback.LOGIC_PUZZLES, 2)):
+        node = out.get(kind) or {}
+        keys = {_wordkey((node.get(lv) or {}).get("question", ""))
+                for lv in ("easy", "hard")}
+        if not (keys & seen["puzzles"]):
+            continue
+        pick = _pick_unused_pair(bank, seen["puzzles"], day, salt)
+        if pick:
+            out[kind] = pick
+            swapped.append(kind)
+            for lv in ("easy", "hard"):
+                seen["puzzles"].add(_wordkey(pick[lv]["question"]))
 
     return swapped
+
+
+def _pick_unused_pair(bank: list, used: set, day: date, salt: int):
+    """Like _pick_unused, but a puzzle pair only counts as free if BOTH
+    levels are unused - otherwise the 9-year-old gets a fresh puzzle and the
+    11-year-old gets yesterday's again."""
+    if not bank:
+        return None
+    start = (day.toordinal() + salt) % len(bank)
+    for k in range(len(bank)):
+        item = bank[(start + k) % len(bank)]
+        keys = {_wordkey(item[lv]["question"]) for lv in ("easy", "hard")}
+        if not (keys & used):
+            return item
+    return bank[start]   # bank exhausted; any choice repeats something
 
 
 def _merge_creative(day: date, generated: dict | None) -> tuple[dict, list[str]]:
@@ -417,6 +449,30 @@ def _sig(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "", str(text or "").lower())[:60]
 
 
+# Words that carry no identity. Dropping them is what lets "Why did the math
+# book look sad?" and "Why did the math book look SO sad?" collapse together -
+# _sig treated those as two different jokes, which is exactly how the same
+# gag got through the repeat check on consecutive days.
+_FILLER = {
+    "a", "an", "the", "and", "or", "of", "to", "in", "on", "at", "as", "by",
+    "is", "are", "was", "were", "be", "been", "did", "do", "does", "so",
+    "very", "just", "that", "this", "it", "its", "you", "your", "if", "then",
+    "what", "which", "who", "how", "many", "much", "has", "have", "had",
+    "with", "for", "from", "but", "not", "there", "here", "get", "gets",
+}
+
+
+def _wordkey(text: str) -> str:
+    """Identity of a joke or a puzzle, robust to rewording.
+
+    Keeps the distinctive words and any numbers, drops filler, ignores order.
+    Numbers matter: two garden-area problems with different dimensions are
+    genuinely different puzzles and must not collide.
+    """
+    words = re.findall(r"[a-z0-9]+", str(text or "").lower())
+    return " ".join(sorted({w for w in words if w not in _FILLER}))[:220]
+
+
 def recent_signatures(
     day: date, back: int = DEDUP_DAYS
 ) -> tuple[set[str], set[str], set[str]]:
@@ -496,13 +552,22 @@ CREATIVE_MEMORY_DAYS = 21
 
 
 def recent_creative(day: date, back: int = CREATIVE_MEMORY_DAYS) -> dict[str, set[str]]:
-    """Wordle words, words of the day, jokes and category names already used."""
-    out = {"wordle": set(), "words": set(), "jokes": set(), "categories": set()}
+    """Everything creative we've already served: words, jokes, puzzles, groups."""
+    out = {"wordle": set(), "words": set(), "jokes": set(),
+           "categories": set(), "puzzles": set()}
     for i in range(1, back + 1):
         prev = day - timedelta(days=i)
         payload = _read_cache(prev) or _pull_from_hub(prev)
         if not payload:
             continue
+        # Math and logic puzzles had no repeat protection at all, which is how
+        # the same riddle ran three days straight.
+        for kind in ("math_puzzle", "logic_puzzle"):
+            node = payload.get(kind) or {}
+            for level in ("easy", "hard"):
+                lv = node.get(level)
+                if isinstance(lv, dict) and lv.get("question"):
+                    out["puzzles"].add(_wordkey(lv["question"]))
         w = payload.get("wordle") or {}
         for level in ("easy", "hard"):
             node = w.get(level)
@@ -513,7 +578,7 @@ def recent_creative(day: date, back: int = CREATIVE_MEMORY_DAYS) -> dict[str, se
             out["words"].add(str(wod["word"]).strip().lower())
         joke = payload.get("joke") or {}
         if joke.get("setup"):
-            out["jokes"].add(_sig(joke["setup"]))
+            out["jokes"].add(_wordkey(joke["setup"]))
         for g in (payload.get("connections") or {}).get("groups", []):
             if isinstance(g, dict) and g.get("name"):
                 out["categories"].add(_sig(g["name"]))
