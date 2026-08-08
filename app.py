@@ -107,9 +107,14 @@ def api_day(day_str: str):
     return JSONResponse(_hide_answers(cached))
 
 
-@app.get("/ping")
+@app.api_route("/ping", methods=["GET", "POST", "HEAD", "PUT", "OPTIONS"])
 def ping():
     """The endpoint the keep-alive cron should hit. Thirteen bytes, always.
+
+    It answers to any method on purpose. Monitoring services differ on what
+    they send - GET, HEAD, sometimes POST - and a keep-alive returning 405
+    because the caller picked the wrong verb is a failure with no upside.
+    Nothing here changes state, so there is nothing to protect.
 
     /health was the wrong tool for that job. It answers "what happened when
     today's page was built", so it grew a diagnostics block - eight feed

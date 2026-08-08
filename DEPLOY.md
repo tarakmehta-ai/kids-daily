@@ -109,6 +109,9 @@ Fix: ping it on a schedule with a free cron service —
 
 - **URL:** `https://<your-service>.onrender.com/ping`
 - **Schedule:** every 10 minutes, **5:45am–9:00pm** your time
+- **Method:** GET is tidiest, but `/ping` answers to GET, POST, HEAD, PUT and
+  OPTIONS alike. Every *other* endpoint is strict about its method — a cron job
+  set to POST will get **405 Method Not Allowed** from `/health` or `/`.
 
 That first ping builds the day before anyone looks at it.
 
@@ -356,6 +359,11 @@ curl -s -o /dev/null -w "%%{http_code} %%{content_type}\n" -X POST \
 ```
 
 `202 application/json` is success. Anything with `text/html` is Render, not us.
+
+**If the cron job fails with "405 Method Not Allowed"**, it is sending POST (or
+HEAD, or PUT) at an endpoint that only answers GET. `/ping` accepts all of
+them; nothing else does. Either point the job at `/ping` or set its method
+back to GET.
 
 **If the cron job fails with "output too large"**, cron-job.org stopped reading
 because the response went past its **64 KB** ceiling. Point the job at `/ping`.
