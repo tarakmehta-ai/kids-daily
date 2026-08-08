@@ -232,7 +232,7 @@ def _pick_unused_pair(bank: list, used: set, day: date, salt: int):
     return bank[start]   # bank exhausted; any choice repeats something
 
 
-def _events_from_wikipedia(raw_events: list[dict]) -> list[dict]:
+def _events_from_wikipedia(raw_events: list[dict], limit: int = 3) -> list[dict]:
     """Build the history section straight from Wikipedia's own wording.
 
     The bank's on_this_day is an apology - "we could not reach our history
@@ -250,7 +250,7 @@ def _events_from_wikipedia(raw_events: list[dict]) -> list[dict]:
         if len(head) > 72:
             head = head[:69].rsplit(" ", 1)[0] + "..."
         out.append({"year": year, "headline": head, "blurb": text, "why_cool": ""})
-        if len(out) == 3:
+        if len(out) == limit:
             break
     return out
 
@@ -292,6 +292,25 @@ def _merge_creative(day: date, generated: dict | None,
         DROPPED["on_this_day"] = len(events) - len(safe_events)
     else:
         out["on_this_day"] = []
+    # The section is a three-card row. When the safety filter thins Claude's
+    # three down to two, a gap is left in the grid - so top it back up from the
+    # same Wikipedia list Claude was working from, skipping years it already
+    # used. Better a plainer third card than a hole.
+    if 0 < len(out["on_this_day"]) < 3:
+        had = len(out["on_this_day"])
+        used_years = {str(e.get("year")) for e in out["on_this_day"]}
+        for extra in _events_from_wikipedia(raw_events or [], limit=8):
+            if str(extra["year"]) in used_years:
+                continue
+            out["on_this_day"].append(extra)
+            used_years.add(str(extra["year"]))
+            if len(out["on_this_day"]) == 3:
+                break
+        added = len(out["on_this_day"]) - had
+        if added:
+            NOTES.append(f"on_this_day: Claude returned {had} usable event" + ("s" if had != 1 else "") + ", "
+                         f"topped up with {added} from Wikipedia")
+
     if not out["on_this_day"]:
         from_wiki = _events_from_wikipedia(raw_events or [])
         if from_wiki:
