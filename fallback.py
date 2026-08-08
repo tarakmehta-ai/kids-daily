@@ -139,88 +139,110 @@ LOGIC_PUZZLES = [
 # Each puzzle must contain 16 DISTINCT words. The "trap" is a word that looks
 # like it belongs to another group but is assigned elsewhere (e.g. JAGUAR sits
 # in CAR BRANDS while BIG CATS is also on the board).
+# Straight category lists - BIG CATS, PLANETS, SCHOOL SUBJECTS - are solved by
+# reading them, which is why the old boards were too easy. Every board below is
+# built the way the real game is built: one word in most groups looks like an
+# obvious member of a different group, and at least three of the four groups
+# turn on wordplay rather than category membership.
 CONNECTIONS = [
     {"groups": [
-        {"name": "BIG CATS", "words": ["LION", "TIGER", "CHEETAH", "PANTHER"], "difficulty": 1},
-        {"name": "PLANETS", "words": ["MARS", "VENUS", "SATURN", "NEPTUNE"], "difficulty": 2},
-        {"name": "___ BALL", "words": ["BASE", "FOOT", "SNOW", "EYE"], "difficulty": 3},
-        {"name": "CAR MODELS THAT ARE ANIMALS", "words": ["JAGUAR", "MUSTANG", "VIPER", "BEETLE"], "difficulty": 4}]},
+        # traps: DUCK and SWALLOW are birds AND verbs; SOLE, HEEL, ARCH and
+        # TONGUE are all body parts as well as parts of a shoe.
+        {"name": "BIRDS", "words": ["DUCK", "SWALLOW", "CROW", "WREN"], "difficulty": 1},
+        {"name": "WAYS TO MOVE FAST", "words": ["DASH", "BOLT", "ZIP", "DART"], "difficulty": 2},
+        {"name": "FISH", "words": ["TROUT", "SOLE", "RAY", "PIKE"], "difficulty": 3},
+        {"name": "PARTS OF A SHOE", "words": ["TONGUE", "HEEL", "LACE", "ARCH"], "difficulty": 4}]},
     {"groups": [
-        {"name": "THINGS IN A PENCIL CASE", "words": ["RULER", "ERASER", "SHARPENER", "GLUE"], "difficulty": 1},
-        {"name": "BREAKFAST FOODS", "words": ["TOAST", "CEREAL", "WAFFLE", "BAGEL"], "difficulty": 2},
-        {"name": "TENNIS TERMS", "words": ["SERVE", "RALLY", "LOVE", "SET"], "difficulty": 3},
-        {"name": "WORDS BEFORE 'BACK'", "words": ["FEED", "PAPER", "COME", "HORSE"], "difficulty": 4}]},
+        # traps: NET belongs with ___WORK, not with the tennis words; SEA and
+        # BEE look like animals; SPOT and DOG look like they go together.
+        {"name": "TENNIS WORDS", "words": ["SERVE", "LOVE", "FAULT", "RALLY"], "difficulty": 1},
+        {"name": "HOT ___", "words": ["SAUCE", "DOG", "SEAT", "SPOT"], "difficulty": 2},
+        {"name": "___ WORK", "words": ["HOME", "NET", "ART", "TEAM"], "difficulty": 3},
+        {"name": "SOUND LIKE SINGLE LETTERS", "words": ["BEE", "SEA", "WHY", "QUEUE"], "difficulty": 4}]},
     {"groups": [
-        {"name": "MINECRAFT MOBS", "words": ["CREEPER", "ENDERMAN", "ZOMBIE", "SLIME"], "difficulty": 1},
-        {"name": "OCEAN LIFE", "words": ["OTTER", "SQUID", "CORAL", "WHALE"], "difficulty": 2},
-        {"name": "SHADES OF GREEN", "words": ["OLIVE", "LIME", "MINT", "FOREST"], "difficulty": 3},
-        {"name": "ANIMATED MOVIE CHARACTERS", "words": ["NEMO", "SIMBA", "WOODY", "ELSA"], "difficulty": 4}]},
+        # traps: MOON, SUN and FULL all pull towards space; LIGHT looks like it
+        # belongs with FLASH and MOON until you find ___HOUSE.
+        {"name": "SPACE THINGS", "words": ["COMET", "ORBIT", "CRATER", "GALAXY"], "difficulty": 1},
+        {"name": "___ LIGHT", "words": ["FLASH", "MOON", "SUN", "HIGH"], "difficulty": 2},
+        {"name": "CARD GAMES", "words": ["SNAP", "WAR", "HEARTS", "BRIDGE"], "difficulty": 3},
+        {"name": "___ HOUSE", "words": ["LIGHT", "GREEN", "FULL", "TREE"], "difficulty": 4}]},
     {"groups": [
-        {"name": "CRICKET WORDS", "words": ["WICKET", "OVER", "BOWLER", "INNINGS"], "difficulty": 1},
-        {"name": "PARTS OF A BIKE", "words": ["PEDAL", "CHAIN", "SPOKE", "BRAKE"], "difficulty": 2},
-        {"name": "THINGS YOU FOLD", "words": ["PAPER", "LAUNDRY", "MAP", "DOUGH"], "difficulty": 3},
-        {"name": "WORN ON YOUR HEAD", "words": ["BEANIE", "HELMET", "CROWN", "CAP"], "difficulty": 4}]},
+        # traps: KAYAK looks like a boat, EGG like food, CRATE like something
+        # in a shed. The last group only clicks when you spot the animal inside.
+        {"name": "INDIAN SNACKS", "words": ["SAMOSA", "DOSA", "PAKORA", "CHAAT"], "difficulty": 1},
+        {"name": "THINGS YOU CAN CRACK", "words": ["CODE", "EGG", "JOKE", "WHIP"], "difficulty": 2},
+        {"name": "SAME SPELLED BACKWARDS", "words": ["LEVEL", "KAYAK", "RADAR", "CIVIC"], "difficulty": 3},
+        {"name": "ANIMAL HIDING INSIDE", "words": ["BEARD", "COWARD", "CRATE", "PIGEON"], "difficulty": 4}]},
     {"groups": [
-        {"name": "SCHOOL SUBJECTS", "words": ["MATH", "ART", "MUSIC", "SCIENCE"], "difficulty": 1},
-        {"name": "WEATHER", "words": ["HAIL", "SLEET", "FOG", "BREEZE"], "difficulty": 2},
-        {"name": "INDIAN FOODS", "words": ["DOSA", "SAMOSA", "PANEER", "CHAI"], "difficulty": 3},
-        {"name": "SOMETHING VERY EASY", "words": ["CINCH", "SNAP", "PIECE", "DODDLE"], "difficulty": 4}]},
+        # traps: PALM is a tree, INDEX is a finger, SPINE and NAIL are body
+        # parts, and every cricket position is an ordinary word too.
+        {"name": "TREES", "words": ["OAK", "MAPLE", "BIRCH", "WILLOW"], "difficulty": 1},
+        {"name": "PARTS OF A BOOK", "words": ["SPINE", "INDEX", "CHAPTER", "BLURB"], "difficulty": 2},
+        {"name": "ON YOUR HAND", "words": ["PALM", "KNUCKLE", "THUMB", "NAIL"], "difficulty": 3},
+        {"name": "CRICKET FIELDING SPOTS", "words": ["SLIP", "GULLY", "COVER", "POINT"], "difficulty": 4}]},
     {"groups": [
-        {"name": "BIRDS", "words": ["ROBIN", "EAGLE", "SWALLOW", "PIGEON"], "difficulty": 1},
-        {"name": "SPACE THINGS", "words": ["COMET", "ORBIT", "NEBULA", "ECLIPSE"], "difficulty": 2},
-        {"name": "CONSTRUCTION MACHINES", "words": ["CRANE", "DIGGER", "LOADER", "ROLLER"], "difficulty": 3},
-        {"name": "MARVEL CHARACTERS", "words": ["GROOT", "HULK", "THOR", "FALCON"], "difficulty": 4}]},
+        # traps: SALSA is also a sauce, SWING is also a playground, TAP is also
+        # a dance, and every music word means something ordinary as well.
+        {"name": "IN A BATHROOM", "words": ["TOWEL", "MIRROR", "SPONGE", "TAP"], "difficulty": 1},
+        {"name": "DANCES", "words": ["SALSA", "TANGO", "SWING", "JIVE"], "difficulty": 2},
+        {"name": "FIRE ___", "words": ["WORK", "FLY", "PLACE", "MAN"], "difficulty": 3},
+        {"name": "MUSIC WORDS", "words": ["NOTE", "SCALE", "BAR", "REST"], "difficulty": 4}]},
 ]
 
+# The age-9 bank. Deliberately NOT the friendly-starter list it used to be -
+# APPLE, TIGER, SMILE and friends are the first words anybody types, so the
+# game was over in two guesses. These are all words a 9-year-old knows on
+# sight, chosen for awkward shape instead: a doubled letter, a consonant
+# cluster, a missing vowel, or a letter in an unexpected place.
 WORDLE_WORDS = [
-    ("BRAVE", "How you feel when you do something scary anyway."),
-    ("PLANT", "It grows in soil and needs sunlight."),
-    ("CHESS", "A board game with kings, knights and bishops."),
-    ("MANGO", "A sweet orange fruit, big in India."),
-    ("STORM", "Thunder, lightning and lots of rain."),
-    ("QUILT", "A warm blanket sewn from patches."),
-    ("BEACH", "Sand, waves and a bucket and spade."),
-    ("PIANO", "88 keys, black and white."),
-    ("TIGER", "Orange with black stripes."),
-    ("CLOUD", "White, fluffy and floating up high."),
-    ("SKATE", "You do this on ice or on a board."),
-    ("HONEY", "Bees make it and it is very sweet."),
-    ("RIVER", "Water that flows all the way to the sea."),
+    ("CRISP", "Thin, dry and it snaps when you bite it."),
+    ("BLINK", "You do this with your eyes without thinking."),
+    ("TWIST", "To turn something round and round."),
+    ("PLUMP", "Round and nicely full - like a cushion or a berry."),
+    ("STOMP", "To walk putting your feet down really hard."),
+    ("SWAMP", "Wet, muddy ground full of reeds."),
+    ("BLUFF", "To pretend you have something you do not."),
+    ("CLIFF", "A wall of rock with a very long drop."),
+    ("CRUMB", "The tiny bit of bread left on the plate."),
+    ("FLICK", "A quick little push with your finger."),
+    ("GRUNT", "The short noise you make lifting something heavy."),
+    ("HATCH", "What a chick does to get out of the egg."),
+    ("MUNCH", "To chew away noisily and happily."),
+    ("NUDGE", "A gentle push with your elbow."),
+    ("PATCH", "A square sewn over a hole."),
+    ("QUACK", "The noise a duck makes."),
+    ("SCOOP", "One round lump of ice cream."),
+    ("SHELF", "A flat board on the wall for books."),
+    ("SLURP", "The rude noise you make drinking soup."),
+    ("SNIFF", "A short sharp breath in through your nose."),
+    ("SPLIT", "To break something neatly into two."),
+    ("SQUID", "Ten arms, no bones, lives in the sea."),
+    ("STAMP", "It goes on a letter - or what your foot does."),
+    ("SWOOP", "What a bird does diving down fast."),
+    ("THUMP", "A heavy dull bang."),
+    ("TRUNK", "An elephant's nose, or the middle of a tree."),
+    ("WHISK", "You beat eggs with it."),
+    ("WITCH", "Pointy hat, broomstick, cauldron."),
+    ("BUNCH", "A whole lot of something held together."),
+    ("CHIRP", "The short high sound a small bird makes."),
+    ("CLUMP", "A thick lump stuck together."),
+    ("DODGE", "To jump out of the way just in time."),
+    ("FLUFF", "Soft light bits that come off a jumper."),
+    ("GLOVE", "You wear one on your hand."),
+    ("MOSSY", "Covered in soft green stuff on a damp rock."),
+    ("PLUCK", "To pull a string on a guitar."),
+    ("SCRUB", "To clean something by rubbing hard."),
+    ("SHINY", "So polished it catches the light."),
+    ("SPIKY", "Covered in sharp points, like a hedgehog."),
+    ("STUNT", "A daring trick, usually on a bike or in a film."),
+    ("TWIRL", "To spin round on the spot."),
+    ("FROST", "The white crunchy layer on the grass in winter."),
+    ("PRANK", "A joke you play on somebody."),
+    ("SHRUG", "What your shoulders do when you don't know."),
+    ("KNOCK", "You do this on a door - and the K is silent."),
+    ("GLOOM", "Dim, grey half-darkness."),
+    ("CHUNK", "A big thick piece broken off."),
     ("GHOST", "A see-through spook from a story."),
-    ("PIZZA", "Round, cheesy, cut into slices."),
-    ("SMILE", "What your face does when you are happy."),
-    ("TRAIN", "It runs on rails and has carriages."),
-    ("MONEY", "You keep it in a wallet."),
-    ("LEMON", "Yellow and very sour."),
-    ("BRUSH", "You use one on your teeth or your hair."),
-    ("CROWN", "A king or queen wears it."),
-    ("FLUTE", "A silver instrument you blow across."),
-    ("SNAKE", "Long, scaly and has no legs."),
-    ("WATCH", "It tells the time on your wrist."),
-    ("EARTH", "The planet we live on."),
-    ("GRAPE", "Small, round, grows in bunches."),
-    ("KNIFE", "You use it to cut your food."),
-    ("MOUSE", "Small squeaky animal - or the thing by your keyboard."),
-    ("OCEAN", "Bigger than a sea, full of salt water."),
-    ("PILOT", "The person flying the plane."),
-    ("QUEEN", "She wears the crown."),
-    ("SHARK", "A fish with a famous fin."),
-    ("TOAST", "Bread that has been in the toaster."),
-    ("VOICE", "What comes out when you speak or sing."),
-    ("WHALE", "The biggest animal in the ocean."),
-    ("APPLE", "Red or green, keeps the doctor away."),
-    ("BREAD", "You make a sandwich out of it."),
-    ("CHAIR", "You sit on it at the table."),
-    ("DREAM", "The story your brain plays while you sleep."),
-    ("FIELD", "Where a cricket or football match is played."),
-    ("GIANT", "Enormous - or a big person in a fairy tale."),
-    ("HEART", "It beats in your chest."),
-    ("JUICE", "Squeezed out of an orange."),
-    ("LIGHT", "You switch it on when it gets dark."),
-    ("MEDAL", "You win it and hang it round your neck."),
-    ("NIGHT", "When the sky goes dark."),
-    ("PAINT", "You put it on a canvas with a brush."),
-    ("SUGAR", "The sweet white stuff in a bowl."),
 ]
 
 # Trickier five-letter words for the 11-year-old: repeated letters, awkward
@@ -260,6 +282,16 @@ HARD_WORDLE_WORDS = [
     ("HYENA", "A spotted animal whose call sounds like laughing."),
     ("IVORY", "The creamy white of old piano keys."),
     ("KAYAK", "A narrow boat you paddle - and a word spelled the same backwards."),
+    ("WRYLY", "Said with a small, knowing, half-amused smile."),
+    ("MOTTO", "A short saying a school or family lives by."),
+    ("SAVVY", "Sharp and clued-up about how things work."),
+    ("MURKY", "Dark and cloudy - water you cannot see through."),
+    ("NYLON", "The tough man-made thread in ropes and rackets."),
+    ("RHYME", "When two words end with the same sound."),
+    ("SYRUP", "Thick sweet liquid you pour on pancakes."),
+    ("TOXIC", "Poisonous - not safe to touch or swallow."),
+    ("WHARF", "The stone edge where boats tie up."),
+    ("PUPPY", "A dog that is still very new at being a dog."),
 ]
 
 JOKES = [

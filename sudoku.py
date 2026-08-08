@@ -32,9 +32,12 @@ from datetime import date
 #
 # size -> (box_rows, box_cols, target clues to leave)
 SPECS = {
-    # age 9: fewer clues than before (was 20) so there is more to do, but the
-    # singles-only guarantee keeps every step findable.
-    6: {"box_r": 2, "box_c": 3, "givens": 15},
+    # age 9: pushed to the floor of what a 6x6 can be. Below about 12 clues a
+    # 2x3 grid stops being uniquely solvable by singles at all, so this is as
+    # hard as this size honestly goes - measured, not guessed. If she still
+    # finds it easy the answer is a bigger grid, not fewer clues, which is why
+    # the page now lets her switch to the 9x9 without changing her level.
+    6: {"box_r": 2, "box_c": 3, "givens": 12},
     # age 11: more clues than before (was 38) AND singles-only, which is the
     # change that actually matters - the old grid could need techniques she had
     # no way to know.

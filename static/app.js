@@ -165,6 +165,15 @@
     }
     return out;
   }
+  // True when the keystroke belongs to something the child is writing in -
+  // a textarea, an input, a dropdown. Games must keep their hands off those.
+  function typingInAField(node) {
+    if (!node) return false;
+    if (node.isContentEditable) return true;
+    var tag = (node.tagName || "").toUpperCase();
+    return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+  }
+
   function store(key, val) {
     lsSet("kd-" + DATA.date + "-" + key, JSON.stringify(val));
   }
@@ -345,7 +354,27 @@
   }
 
   // ---------- wordle ----------
-  var WL = { answer: "", guesses: [], current: "", done: false };
+  var WL = { answer: "", guesses: [], current: "", done: false, clueShown: false };
+
+  // The clue no longer sits there for the taking. Three real attempts first -
+  // enough that the letters have told you something, so the clue confirms a
+  // hunch instead of replacing one.
+  var WL_CLUE_AFTER = 3;
+
+  function wlPaintClue() {
+    var btn = $("#wl-clue-btn");
+    if (!btn) return;
+    if (WL.clueShown || WL.done) { btn.style.display = "none"; return; }
+    var left = WL_CLUE_AFTER - WL.guesses.length;
+    btn.style.display = "";
+    if (left > 0) {
+      btn.disabled = true;
+      btn.textContent = "Clue unlocks after " + left + (left === 1 ? " more try" : " more tries");
+    } else {
+      btn.disabled = false;
+      btn.textContent = "Stuck? Get a clue";
+    }
+  }
 
   function wlScore(guess, answer) {
     // Two passes so repeated letters colour the way real Wordle does.
@@ -429,6 +458,7 @@
       wlToast("");
     }
     store("wordle-" + wlLevel(), { guesses: WL.guesses, done: WL.done });
+    wlPaintClue();
     wlDrawBoard();
   }
 
@@ -450,16 +480,19 @@
       var row = el("div", "kb-row");
       if (idx === 2) {
         var e = el("button", "key wide", "Enter");
+        e.type = "button";
         e.dataset.key = "ENTER";
         row.appendChild(e);
       }
       r.split("").forEach(function (ch) {
         var b = el("button", "key", ch);
+        b.type = "button";
         b.dataset.key = ch;
         row.appendChild(b);
       });
       if (idx === 2) {
         var d = el("button", "key wide", "Del");
+        d.type = "button";
         d.dataset.key = "BACK";
         row.appendChild(d);
       }
@@ -467,7 +500,11 @@
     });
     kb.addEventListener("click", function (ev) {
       var b = ev.target.closest(".key");
-      if (b) wlKey(b.dataset.key);
+      if (!b) return;
+      // Without this the tapped key keeps focus, so the next Enter or Space
+      // from the real keyboard fires that key a second time.
+      b.blur();
+      wlKey(b.dataset.key);
     });
   }
 
@@ -513,17 +550,21 @@
       WL.done = !!saved.done;
     }
     // The clue used to sit on screen permanently, which is most of why this
-    // felt too easy. It is now behind a button, so asking for it is a choice.
+    // felt too easy. It is now behind a button, and the button is locked for
+    // the first three guesses.
+    WL.clueShown = false;
     var clue = $("#wl-hint"), btn = $("#wl-clue-btn");
     clue.textContent = "";
     clue.classList.remove("show");
-    btn.style.display = "";
-    btn.textContent = "Stuck? Get a clue";
     btn.onclick = function () {
+      if (WL.guesses.length < WL_CLUE_AFTER) return;
+      WL.clueShown = true;
       clue.textContent = node.hint || "";
       clue.classList.add("show");
       btn.style.display = "none";
+      TRACK.push({ type: "wordle_clue", section: "s-wordle", after: WL.guesses.length });
     };
+    wlPaintClue();
     $("#wl-after").innerHTML = "";
     $("#wl-after").classList.remove("show");
     wlBuildKeyboard();
@@ -535,12 +576,19 @@
     }
     if (!WL.keysBound) {
       WL.keysBound = true;
-    document.addEventListener("keydown", function (ev) {
-      if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
-      if (ev.key === "Enter") wlKey("ENTER");
-      else if (ev.key === "Backspace") wlKey("BACK");
-      else if (/^[a-zA-Z]$/.test(ev.key)) wlKey(ev.key.toUpperCase());
-    });
+      document.addEventListener("keydown", function (ev) {
+        if (ev.metaKey || ev.ctrlKey || ev.altKey || ev.isComposing) return;
+        // THE BUG: this listener was global, so every letter typed into the
+        // Summer Check-In or the feedback box also went into the Wordle row.
+        // Five characters later the row was full of junk and every real guess
+        // keystroke was silently ignored - which from the other side of the
+        // screen just looks like "I can't type."
+        if (typingInAField(ev.target)) return;
+        if (ev.key === "Enter") wlKey("ENTER");
+        else if (ev.key === "Backspace") wlKey("BACK");
+        else if (ev.key === "Escape") { WL.current = ""; wlToast(""); wlDrawBoard(); }
+        else if (/^[a-zA-Z]$/.test(ev.key)) wlKey(ev.key.toUpperCase());
+      });
     }
   }
 
@@ -720,10 +768,25 @@
   // ---------- sudoku ----------
   var SD = { size: 6, boxR: 2, boxC: 3, given: [], cells: [], sol: [], sel: -1, done: false, level: "easy" };
 
+  // A 6x6 can only be made so hard - below about 12 clues it stops being
+  // solvable without guessing at all. So the way up is a bigger grid, and
+  // that choice belongs to whoever is playing, not to the age toggle. It
+  // sticks between visits and doesn't touch anything else on the page.
+  function sdWanted() {
+    var pick = lsGet("kd-sd-level");
+    if (pick === "easy" || pick === "hard") return pick;
+    return AGE === "11" ? "hard" : "easy";
+  }
+
+  // Returns {level, pz}, falling back to whichever grid the server did send
+  // so a half-built payload downgrades instead of blanking the section.
   function sdPuzzle() {
     var all = DATA.sudoku;
     if (!all) return null;
-    return all[AGE === "11" ? "hard" : "easy"] || null;
+    var want = sdWanted();
+    if (!all[want]) want = (want === "hard") ? "easy" : "hard";
+    if (!all[want]) return null;
+    return { level: want, pz: all[want] };
   }
 
   function sdConflicts() {
@@ -821,7 +884,9 @@
     SD.sel = -1;
     sdSave();
     var st = STREAK.win("sudoku");
-    $("#sd-toast").textContent = "Solved it! 🎉";
+    $("#sd-toast").textContent = SD.level === "easy"
+      ? "Solved it! 🎉 Too easy? Tap 9×9 for the big grid."
+      : "Solved it! 🎉";
     paintStreak("sudoku", "sd-streak");
     TRACK.push({ type: "sudoku_result", section: "s-sudoku", solved: true, streak: st.streak });
     sdDraw();
@@ -829,11 +894,26 @@
 
   function renderSudoku() {
     var section = document.getElementById("s-sudoku");
-    var pz = sdPuzzle();
-    if (!pz) { if (section) section.style.display = "none"; return; }
+    var got = sdPuzzle();
+    if (!got) { if (section) section.style.display = "none"; return; }
     if (section) section.style.display = "";
+    var pz = got.pz;
 
-    SD.level = AGE === "11" ? "hard" : "easy";
+    SD.level = got.level;
+    var both = !!((DATA.sudoku || {}).easy && (DATA.sudoku || {}).hard);
+    document.querySelectorAll(".sdlvl").forEach(function (b) {
+      b.style.display = both ? "" : "none";
+      b.setAttribute("aria-pressed", String(b.dataset.sd === SD.level));
+      if (!SD.btnsBound) {
+        b.addEventListener("click", function () {
+          lsSet("kd-sd-level", b.dataset.sd);
+          TRACK.push({ type: "sudoku_level", section: "s-sudoku", level: b.dataset.sd });
+          renderSudoku();
+        });
+      }
+    });
+    SD.btnsBound = true;
+
     SD.size = pz.size; SD.boxR = pz.box_r; SD.boxC = pz.box_c;
     SD.given = pz.puzzle.map(function (v) { return v !== 0; });
     SD.cells = pz.puzzle.slice();

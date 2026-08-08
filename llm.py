@@ -205,16 +205,28 @@ Produce this exact JSON structure:
 }}
 
 Requirements:
-- connections: exactly 16 distinct single words, 4 groups of 4. Categories must
-  be solvable by kids (animals, sports, food, school, space, Minecraft, music,
-  words that precede "ball", etc). difficulty 1 = most obvious, 4 = trickiest.
-  Include at least one word that looks like it belongs in the wrong group.
-- wordle.easy: a word a 9-year-old definitely knows, but NOT the most obvious
-  choice - avoid APPLE, HOUSE, WATER, HAPPY and similar starter words. Aim for
-  something they know but would not guess first, e.g. CRISP, BLINK, GHOST.
-- wordle.hard: genuinely trickier for an 11-year-old - repeated letters,
-  awkward letter pairs, or a less common shape (PROXY, KNACK, ABYSS, FJORD).
-  Still a real word they would recognise once they see it.
+- connections: exactly 16 distinct single words, 4 groups of 4. This is being
+  solved by a 9-year-old who finds straight category lists ("colours", "big
+  cats", "planets") far too easy, so DO NOT build the board that way.
+  Requirements, all of them:
+    * at most ONE plain category. The other three must turn on wordplay -
+      words that all precede or follow the same word, homophones, words with a
+      smaller word hidden inside, things a word can mean in two different
+      worlds (SET in tennis and SET in maths), anagram-ish shapes.
+    * at least THREE words must look like an obvious fit for a group they do
+      not belong to. That red-herring overlap is the whole game.
+    * the difficulty-1 group should still take a moment; difficulty 4 should
+      only click once the other three are gone.
+  Everything must still be knowable by a 9-year-old - tricky, never obscure.
+- wordle.easy: NOT a starter word. A 9-year-old should recognise it instantly
+  once solved but be unlikely to reach it early. Prefer awkward shapes: a
+  repeated letter, an unusual pair (CH, TH, SW, KN), few vowels, or a vowel in
+  a surprising place - CHOMP, SWIRL, PLUMP, SKUNK, TWIST. Avoid anything on a
+  common-starter list (APPLE, HOUSE, WATER, HAPPY, CRANE, SLATE, ADIEU).
+- wordle.hard: harder still for an 11-year-old - two repeated letters, Y as
+  the only vowel, or an uncommon letter carrying the word (PROXY, ABYSS,
+  FJORD, WRYLY, GLYPH, MOTTO). Still a real word she would recognise.
+- The two words must not share more than two letters with each other.
 - Both: no plurals ending in S, no proper nouns.
 - wordle fact: one genuinely interesting sentence about the word - its origin,
   or a surprising detail. Shown only after they solve it, as the reward.

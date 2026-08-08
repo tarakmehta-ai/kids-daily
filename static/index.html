@@ -158,7 +158,7 @@
         <div class="ico">🟩</div>
         <div>
           <h2>Guess the Word</h2>
-          <p class="sub">Five letters, six tries. The clue is there if you want it.</p>
+          <p class="sub">Five letters, six tries. The clue unlocks after three guesses.</p>
         </div>
       </div>
       <div class="game">
@@ -202,10 +202,14 @@
         <div class="ico">🔢</div>
         <div>
           <h2>Sudoku</h2>
-          <p class="sub">Age 9 gets a 6x6 grid, age 11 gets the full 9x9</p>
+          <p class="sub">Pick your grid — swap any time, it won't change the rest of the page</p>
         </div>
       </div>
       <div class="game">
+        <div class="sd-levels" role="group" aria-label="Choose your grid size">
+          <button class="sdlvl" data-sd="easy" aria-pressed="false">6×6</button>
+          <button class="sdlvl" data-sd="hard" aria-pressed="false">9×9 · bigger challenge</button>
+        </div>
         <p class="hint"><b>How to play</b><span id="sd-hint"></span></p>
         <div class="sd-wrap">
           <div class="sd-grid" id="sd-grid"></div>

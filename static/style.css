@@ -464,6 +464,22 @@ a { color: var(--brand); }
 }
 
 /* ======================= sudoku ======================= */
+.sd-levels {
+  display: flex; gap: 8px; justify-content: center;
+  flex-wrap: wrap; margin: 0 0 14px;
+}
+.sdlvl {
+  border: 1px solid rgba(255, 255, 255, .3);
+  background: rgba(255, 255, 255, .12);
+  color: #cfe0f0;
+  padding: 8px 16px; border-radius: 999px;
+  font: inherit; font-weight: 700; font-size: .84rem;
+  cursor: pointer; transition: all .15s ease;
+}
+.sdlvl:hover { background: rgba(255, 255, 255, .2); }
+.sdlvl[aria-pressed="true"] {
+  background: #fff; color: #16273f; border-color: #fff;
+}
 .sd-wrap { display: flex; justify-content: center; margin: 4px 0 10px; }
 .sd-grid {
   display: grid;

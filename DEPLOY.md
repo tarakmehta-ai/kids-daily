@@ -281,6 +281,32 @@ Budget **under $2** in practice.
 
 ---
 
+## Turning the difficulty up or down
+
+All of it is one number or one line, and none of it needs a rebuild of the
+content — only a redeploy.
+
+| What | Where | Now | To make it easier |
+|---|---|---|---|
+| 6×6 Sudoku | `sudoku.py` → `SPECS[6]["givens"]` | `12` | raise it — `15` is where it was |
+| 9×9 Sudoku | `sudoku.py` → `SPECS[9]["givens"]` | `44` | raise it; below ~36 it gets long |
+| Wordle clue lock | `static/app.js` → `WL_CLUE_AFTER` | `3` guesses | set to `0` for the clue straight away |
+| Word choice | `llm.py` → the `wordle.easy` / `wordle.hard` rules | tricky shapes | soften the wording |
+| Groups board | `llm.py` → the `connections` rules | wordplay + traps | drop the "at most ONE plain category" line |
+
+Two things the Sudoku numbers won't do:
+
+- **Below about 12 clues a 6×6 stops working.** There isn't a unique
+  no-guessing puzzle down there, so the generator quietly keeps more clues
+  instead. 12 is the floor, not a preference — measured, not guessed.
+- **Clue count is not difficulty.** Every puzzle shipped is solvable with
+  nothing but naked and hidden singles, proven at build time. Fewer clues means
+  more scanning, never a dead end where she has to guess.
+
+Which is why the Sudoku card now has its own **6×6 / 9×9** buttons. If the 6×6
+is still too quick, that's the ladder — and it's her choice, saved on her
+device, independent of the page's age toggle.
+
 ## Everyday operations
 
 **Force a rebuild** (a bad joke slipped through):
