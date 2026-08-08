@@ -2,9 +2,11 @@
 
 Endpoints
     GET  /              the site
+    GET  /ping          13 bytes, for the keep-alive cron. Nothing else.
     GET  /api/today     today's payload (built on first hit, then cached)
     GET  /api/day/{d}   a specific YYYY-MM-DD, if we still have it
     GET  /health        which sources worked, what fell back to the bank
+                        (add ?brief=1 for the one-line version)
     POST /api/refresh   force a rebuild in the background (needs ADMIN_TOKEN)
     GET  /api/refresh/status  how that rebuild is going (needs ADMIN_TOKEN)
     POST /api/track     engagement events from the page (open, validated hard)
@@ -25,7 +27,7 @@ import threading
 from datetime import date, datetime
 
 from fastapi import FastAPI, HTTPException, Query, Request
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 import analytics
@@ -105,11 +107,42 @@ def api_day(day_str: str):
     return JSONResponse(_hide_answers(cached))
 
 
+@app.get("/ping")
+def ping():
+    """The endpoint the keep-alive cron should hit. Thirteen bytes, always.
+
+    /health was the wrong tool for that job. It answers "what happened when
+    today's page was built", so it grew a diagnostics block - eight feed
+    reports, filter counts, LLM status - and cron services cap how much of a
+    response they will read. Their job is to keep the instance awake, and for
+    that a couple of bytes is plenty.
+
+    It still does the useful half: waking the instance and making sure today's
+    page exists. The build runs on a background thread, so the cron gets its
+    answer immediately instead of holding a connection open for 40 seconds and
+    tripping a timeout instead of a size limit.
+    """
+    day = builder.today()
+    if builder._read_cache(day) is None and not _REBUILD["active"]:
+        threading.Thread(target=_rebuild, kwargs={"force": False}, daemon=True).start()
+    return PlainTextResponse("ok " + day.isoformat() + "\n")
+
+
 @app.get("/health")
-def health():
+def health(brief: bool = Query(False, description="drop the diagnostics block")):
     payload = builder.get_day()
     diag = payload.get("diagnostics", {})
     fell_back = diag.get("fell_back_to_bank", [])
+    if brief:
+        # Everything a monitor needs to decide "is this thing healthy", and
+        # nothing it has to parse. Well under 200 bytes.
+        return {
+            "status": "ok" if not fell_back else "degraded",
+            "date": payload.get("date"),
+            "generated_at": payload.get("generated_at"),
+            "api_key_present": bool(os.environ.get("ANTHROPIC_API_KEY")),
+            "problems": len(fell_back),
+        }
     return {
         "status": "ok" if not fell_back else "degraded",
         "date": payload.get("date"),
@@ -142,6 +175,25 @@ def health():
 _REBUILD = {"active": False, "started": None, "finished": None, "error": None}
 
 
+def _rebuild(*, force: bool) -> None:
+    """Build today's page off the request thread. Shared by /ping and /refresh.
+
+    force=False is the /ping case: build only if there isn't one already, which
+    after a cold start usually means pulling the cached day back from the
+    dataset rather than paying Claude again.
+    """
+    _REBUILD.update(active=True, error=None,
+                    started=datetime.now(builder.TZ).isoformat(), finished=None)
+    try:
+        builder.get_day(force=force)
+    except Exception as exc:  # noqa: BLE001
+        _REBUILD["error"] = f"{type(exc).__name__}: {exc}"
+        log.exception("background rebuild failed")
+    finally:
+        _REBUILD.update(active=False,
+                        finished=datetime.now(builder.TZ).isoformat())
+
+
 @app.post("/api/refresh")
 def refresh(token: str = Query(...), wait: bool = Query(False)):
     _require_admin(token)
@@ -157,19 +209,7 @@ def refresh(token: str = Query(...), wait: bool = Query(False)):
             status_code=202,
         )
 
-    def _go():
-        _REBUILD.update(active=True, error=None,
-                        started=datetime.now(builder.TZ).isoformat(), finished=None)
-        try:
-            builder.get_day(force=True)
-        except Exception as exc:  # noqa: BLE001
-            _REBUILD["error"] = f"{type(exc).__name__}: {exc}"
-            log.exception("forced rebuild failed")
-        finally:
-            _REBUILD.update(active=False,
-                            finished=datetime.now(builder.TZ).isoformat())
-
-    threading.Thread(target=_go, daemon=True).start()
+    threading.Thread(target=_rebuild, kwargs={"force": True}, daemon=True).start()
     return JSONResponse(
         {
             "status": "rebuilding in the background",

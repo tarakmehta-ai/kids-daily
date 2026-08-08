@@ -107,10 +107,21 @@ long wait in front of a blank page.
 Fix: ping it on a schedule with a free cron service —
 <https://cron-job.org> or <https://uptimerobot.com>.
 
-- **URL:** `https://<your-service>.onrender.com/health`
+- **URL:** `https://<your-service>.onrender.com/ping`
 - **Schedule:** every 10 minutes, **5:45am–9:00pm** your time
 
 That first ping builds the day before anyone looks at it.
+
+**Point the cron at `/ping`, not `/health`.** cron-job.org reads at most
+**64 KB** of a response and aborts the job with *"output too large"* if you go
+over — so a monitoring endpoint should say as little as possible. `/ping`
+returns 14 bytes (`ok 2026-08-08`), answers instantly, and still kicks off the
+day's build on a background thread. `/health` is for you to read, not for a
+robot: it carries the whole diagnostics block.
+
+If you want the cron to actually check health rather than just poke the
+service, use `/health?brief=1` — 138 bytes, with `status` and `date` in it.
+cron-job.org can then match on the response containing `"status": "ok"`.
 
 The free plan allows 750 instance hours per month; a ~15-hour daily window is
 around 465, so there's plenty of margin. (Pinging 24/7 would burn ~744 and any
@@ -130,7 +141,9 @@ and the header date reads tomorrow. It then stays put until 8pm the next
 evening, so nothing shifts under them mid-morning.
 
 You don't need a separate cron job for this — the 10-minute keep-alive ping
-hits `/health` at 8:00pm, which triggers the build automatically.
+hits `/ping` at 8:00pm, which starts the build automatically. `/ping` replies
+before the build finishes, so the job is never sitting there waiting on Claude
+and eight RSS feeds; the page is ready a minute or so later.
 
 `SITE_TZ` is `America/New_York`, so this tracks the local clock through the
 EDT/EST switch. It's 8pm all year, not 8pm EST drifting to 7pm.
@@ -313,8 +326,7 @@ device, independent of the page's age toggle.
 
 ```bash
 # 1. wake the service first, so the rebuild isn't racing a cold start
-curl -s -o /dev/null -w "awake: %%{http_code}\n" \
-  "https://<your-service>.onrender.com/health"
+curl -s -w " <- awake\n" "https://<your-service>.onrender.com/ping"
 
 # 2. kick off the rebuild - returns straight away with 202
 curl -sS -X POST -w "\nHTTP %%{http_code}\n" \
@@ -344,6 +356,31 @@ curl -s -o /dev/null -w "%%{http_code} %%{content_type}\n" -X POST \
 ```
 
 `202 application/json` is success. Anything with `text/html` is Render, not us.
+
+**If the cron job fails with "output too large"**, cron-job.org stopped reading
+because the response went past its **64 KB** ceiling. Point the job at `/ping`.
+If it still fails, the job is not on the URL you think it is — check what size
+each one actually returns:
+
+```bash
+for p in /ping "/health?brief=1" /health /api/today / ; do
+  printf "%-18s " "$p"
+  curl -s -o /dev/null -w "%%{size_download} bytes  %%{content_type}\n" \
+    "https://<your-service>.onrender.com$p"
+done
+```
+
+Measured on the live site, for reference:
+
+| Endpoint | Size | Safe for a cron? |
+|---|---|---|
+| `/ping` | 14 B | yes — use this |
+| `/health?brief=1` | 138 B | yes |
+| `/health` | ~2.5 KB | yes, but it's meant for you |
+| `/` | 11 KB | fine |
+| `/api/today` | ~15 KB | fine |
+| `/api/stats.json` | grows with use | **no** — it carries every note the kids have written |
+| `/static/hero.jpg` | 517 KB | **no** — the only thing here over 64 KB by itself |
 
 **Deploy a change.** Push to `main`; Render rebuilds automatically.
 
