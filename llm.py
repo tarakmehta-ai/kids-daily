@@ -169,6 +169,12 @@ _JOKE_TYPES = ["pun", "riddle", "knock-knock", "pun", "riddle",
                "wordplay about animals", "wordplay about school or food"]
 
 
+# Every key the creative call is supposed to return. Used to tell a complete
+# response from a salvaged fragment.
+CREATIVE_KEYS = ("word_of_day", "math_puzzle", "logic_puzzle",
+                 "connections", "wordle", "joke", "on_this_day")
+
+
 def _styles_for(day: date) -> dict:
     n = day.toordinal()
     return {
@@ -187,8 +193,13 @@ def generate_creative(
         or "(none supplied - use your own knowledge, and only facts you are confident about)"
     )
     avoid = avoid or {}
-    def _listing(label, items, cap=40):
+    def _listing(label, items, cap=40, trim=None):
+        # Puzzle and joke keys are word-soup signatures, some of them long.
+        # Trimmed here so three weeks of memory stays a hint, not a wall of
+        # text competing with the actual instructions.
         items = sorted(items)[:cap]
+        if trim:
+            items = [i[:trim] for i in items]
         return f"\n{label}: {', '.join(items)}" if items else ""
 
     avoid_blob = (
@@ -199,8 +210,8 @@ def generate_creative(
         # was never told it had just served the same riddle. Both are keyed on
         # content words, so what appears here reads oddly - that is fine, it
         # only has to be recognisable enough to steer away from.
-        + _listing("Joke setups already used", avoid.get("jokes", set()), cap=25)
-        + _listing("Puzzles already used", avoid.get("puzzles", set()), cap=30)
+        + _listing("Joke setups already used", avoid.get("jokes", set()), cap=21, trim=55)
+        + _listing("Puzzles already used", avoid.get("puzzles", set()), cap=24, trim=55)
     )
     if avoid_blob:
         avoid_blob = (
@@ -302,20 +313,42 @@ Requirements:
 - joke: must be clean and actually funny, not a groaner about nothing.
 - Vary your choices day to day; do not default to the most obvious answers."""
 
-    try:
-        msg = _client().messages.create(
-            model=MODEL,
-            max_tokens=12000,
-            system=HOUSE_RULES,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        data = _extract_json(_text_of(msg))
-        LLM_LOG["creative"] = "claude ok"
-        return data
-    except Exception as exc:  # noqa: BLE001
-        log.exception("creative generation failed")
-        LLM_LOG["creative"] = f"claude failed ({type(exc).__name__}) - using bank"
-        return None
+    # A salvaged prefix used to be indistinguishable from a clean response:
+    # _salvage_json would recover the first two keys, the log said "claude ok",
+    # and five sections quietly came from the bank. Anything short of the full
+    # set is now treated as a failure worth retrying, and said out loud.
+    last_err = None
+    for attempt in (1, 2):
+        try:
+            msg = _client().messages.create(
+                model=MODEL,
+                max_tokens=20000,
+                system=HOUSE_RULES,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            stop = getattr(msg, "stop_reason", "?")
+            data = _extract_json(_text_of(msg))
+            missing = [k for k in CREATIVE_KEYS if not (data or {}).get(k)]
+            if missing and attempt == 1:
+                last_err = ValueError("incomplete: " + ", ".join(missing))
+                log.warning("creative response was missing %s - retrying", missing)
+                continue
+            note = "claude ok"
+            if stop == "max_tokens":
+                note += " [hit max_tokens - response was salvaged]"
+            if missing:
+                note += " [incomplete: " + ", ".join(missing) + " came from the bank]"
+            elif attempt > 1:
+                note += " [succeeded on retry]"
+            LLM_LOG["creative"] = note
+            return data
+        except Exception as exc:  # noqa: BLE001
+            last_err = exc
+            log.warning("creative attempt %d failed: %s", attempt, exc)
+
+    log.error("creative generation failed after 2 attempts: %s", last_err)
+    LLM_LOG["creative"] = f"claude failed ({type(last_err).__name__}) - using bank"
+    return None
 
 
 def _strip_tags(text: str) -> str:

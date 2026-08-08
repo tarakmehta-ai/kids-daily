@@ -51,6 +51,9 @@ DROPPED: dict[str, int] = {}
 # Which sections had to relax the freshness rule today, and how far.
 FRESHNESS: dict[str, str] = {}
 
+# Anything worth saying about how today was assembled that isn't a failure.
+NOTES: list[str] = []
+
 # One build at a time. Without this, two kids loading the page at 7am would
 # each kick off a full generation (and each cost an API call).
 _LOCK = threading.Lock()
@@ -229,7 +232,31 @@ def _pick_unused_pair(bank: list, used: set, day: date, salt: int):
     return bank[start]   # bank exhausted; any choice repeats something
 
 
-def _merge_creative(day: date, generated: dict | None) -> tuple[dict, list[str]]:
+def _events_from_wikipedia(raw_events: list[dict]) -> list[dict]:
+    """Build the history section straight from Wikipedia's own wording.
+
+    The bank's on_this_day is an apology - "we could not reach our history
+    source". Showing that when Wikipedia answered perfectly well and it was
+    only the model's formatting that went missing is a lie to a nine-year-old.
+    Plain real events beat a polished apology.
+    """
+    out = []
+    for e in raw_events:
+        text = str(e.get("text") or "").strip()
+        year = e.get("year")
+        if not text or not year or not safety.is_safe(text):
+            continue
+        head = re.split(r"[:;.]", text)[0].strip()
+        if len(head) > 72:
+            head = head[:69].rsplit(" ", 1)[0] + "..."
+        out.append({"year": year, "headline": head, "blurb": text, "why_cool": ""})
+        if len(out) == 3:
+            break
+    return out
+
+
+def _merge_creative(day: date, generated: dict | None,
+                    raw_events: list[dict] | None = None) -> tuple[dict, list[str]]:
     bank = fallback.creative_bank(day)
     used_bank: list[str] = []
     out: dict[str, Any] = {}
@@ -266,8 +293,14 @@ def _merge_creative(day: date, generated: dict | None) -> tuple[dict, list[str]]
     else:
         out["on_this_day"] = []
     if not out["on_this_day"]:
-        out["on_this_day"] = bank["on_this_day"]
-        used_bank.append("on_this_day")
+        from_wiki = _events_from_wikipedia(raw_events or [])
+        if from_wiki:
+            out["on_this_day"] = from_wiki
+            NOTES.append("on_this_day: used Wikipedia's own wording "
+                         "(the model didn't return this section)")
+        else:
+            out["on_this_day"] = bank["on_this_day"]
+            used_bank.append("on_this_day")
     return out, used_bank
 
 
@@ -357,6 +390,7 @@ def build(day: date) -> dict:
     llm.LLM_LOG.clear()
     DROPPED.clear()
     FRESHNESS.clear()
+    NOTES.clear()
 
     all_events = sources.fetch_on_this_day(day)
     raw_events = safety.scrub_events(all_events)
@@ -390,7 +424,7 @@ def build(day: date) -> dict:
         creative_raw = news_raw = None
         llm.LLM_LOG["creative"] = llm.LLM_LOG["news"] = "no ANTHROPIC_API_KEY - using bank"
 
-    creative, bank_creative = _merge_creative(day, creative_raw)
+    creative, bank_creative = _merge_creative(day, creative_raw, raw_events)
     # Belt and braces: even with the prompt told what to avoid, swap out
     # anything that still came back as a repeat.
     swapped = _dedupe_creative(day, creative, seen_creative)
@@ -423,6 +457,7 @@ def build(day: date) -> dict:
             "blocked_by_filter": {k: v for k, v in DROPPED.items() if v},
             "freshness_relaxed": dict(FRESHNESS),
             "creative_swapped_to_avoid_repeat": swapped,
+            "notes": list(NOTES),
             "links_mode": LINKS_MODE,
         },
     }
