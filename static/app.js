@@ -174,6 +174,13 @@
     return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
   }
 
+  // Is this element inside a given section? Used so each game can claim the
+  // keyboard while it has focus, instead of every handler seeing every key.
+  function inSection(node, id) {
+    if (!node || !node.closest) return false;
+    return !!node.closest("#" + id);
+  }
+
   function store(key, val) {
     lsSet("kd-" + DATA.date + "-" + key, JSON.stringify(val));
   }
@@ -584,6 +591,10 @@
         // keystroke was silently ignored - which from the other side of the
         // screen just looks like "I can't type."
         if (typingInAField(ev.target)) return;
+        // Sudoku owns the keyboard while one of its cells is focused. Without
+        // this, Backspace would erase a Sudoku square AND delete a Wordle
+        // letter in the same keystroke - the same class of bug as above.
+        if (inSection(ev.target, "s-sudoku")) return;
         if (ev.key === "Enter") wlKey("ENTER");
         else if (ev.key === "Backspace") wlKey("BACK");
         else if (ev.key === "Escape") { WL.current = ""; wlToast(""); wlDrawBoard(); }
@@ -830,11 +841,24 @@
     var n = SD.size;
     grid.style.gridTemplateColumns = "repeat(" + n + ", 1fr)";
     grid.className = "sd-grid n" + n;
+    // The grid is rebuilt on every keystroke, which throws away the focused
+    // element - and losing focus mid-word would end keyboard entry after one
+    // digit. So remember whether focus was in here, and put it back after.
+    var hadFocus = grid.contains(document.activeElement);
     grid.innerHTML = "";
     var bad = sdConflicts();
+    // Roving tabindex: only one cell is in the tab order, so Tab lands you in
+    // the grid and the arrow keys do the moving - rather than 81 tab stops.
+    var firstEditable = -1;
+    for (var f = 0; f < n * n; f++) {
+      if (!SD.given[f]) { firstEditable = f; break; }
+    }
+    var tabCell = (SD.sel >= 0 && !SD.given[SD.sel]) ? SD.sel : firstEditable;
     for (var i = 0; i < n * n; i++) {
       var b = el("button", "sd-cell");
       var r = Math.floor(i / n), c = i % n;
+      b.type = "button";
+      b.tabIndex = (i === tabCell) ? 0 : -1;
       if (SD.given[i]) b.classList.add("given");
       if (i === SD.sel) b.classList.add("sel");
       if (bad[i] && !SD.given[i]) b.classList.add("bad");
@@ -842,6 +866,10 @@
       if ((r + 1) % SD.boxR === 0 && r !== n - 1) b.classList.add("bb");
       b.textContent = SD.cells[i] ? String(SD.cells[i]) : "";
       b.disabled = SD.done;
+      b.setAttribute("aria-label",
+        "row " + (r + 1) + " column " + (c + 1) + ", " +
+        (SD.given[i] ? "given " + SD.cells[i]
+                     : SD.cells[i] ? String(SD.cells[i]) : "empty"));
       (function (idx) {
         b.addEventListener("click", function () {
           if (SD.done || SD.given[idx]) return;
@@ -850,6 +878,10 @@
         });
       })(i);
       grid.appendChild(b);
+    }
+    if (hadFocus) {
+      var keep = grid.children[SD.sel >= 0 ? SD.sel : tabCell];
+      if (keep && !keep.disabled) keep.focus();
     }
 
     var pad = $("#sd-pad");
@@ -868,8 +900,76 @@
     pad.appendChild(er);
   }
 
+  // ---- keyboard entry ----------------------------------------------------
+  // Bound to the GRID, not the document. A cell has to be focused for these to
+  // fire, which is both the natural mental model and the thing that stops
+  // Sudoku and Wordle fighting over Backspace.
+
+  function sdSelect(i) {
+    SD.sel = i;
+    sdDraw();
+  }
+
+  // Arrows skip over the given numbers, since you can never type into those.
+  function sdMove(dr, dc) {
+    var n = SD.size;
+    if (SD.sel < 0) {
+      for (var k = 0; k < n * n; k++) {
+        if (!SD.given[k]) { sdSelect(k); return; }
+      }
+      return;
+    }
+    var r = Math.floor(SD.sel / n), c = SD.sel % n;
+    for (var step = 0; step < n; step++) {
+      r += dr; c += dc;
+      if (r < 0 || r >= n || c < 0 || c >= n) return;   // at the edge, stay put
+      var idx = r * n + c;
+      if (!SD.given[idx]) { sdSelect(idx); return; }
+    }
+  }
+
+  var SD_ARROWS = {
+    ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1],
+    Up: [-1, 0], Down: [1, 0], Left: [0, -1], Right: [0, 1]   // older browsers
+  };
+
+  function sdKey(ev) {
+    if (SD.done || ev.metaKey || ev.ctrlKey || ev.altKey) return;
+    var k = ev.key;
+
+    if (/^[0-9]$/.test(k)) {
+      var v = parseInt(k, 10);
+      // On the 6x6 there is no 7, 8 or 9 - swallow them rather than pretend.
+      if (v > SD.size) { sdToast("This grid only goes up to " + SD.size); return; }
+      sdPlace(v);                       // 0 erases, same as the Erase button
+      ev.preventDefault(); ev.stopPropagation();
+      return;
+    }
+    if (k === "Backspace" || k === "Delete" || k === " " || k === "Spacebar") {
+      sdPlace(0);
+      ev.preventDefault(); ev.stopPropagation();
+      return;
+    }
+    if (SD_ARROWS[k]) {
+      sdMove(SD_ARROWS[k][0], SD_ARROWS[k][1]);
+      ev.preventDefault(); ev.stopPropagation();
+      return;
+    }
+    if (k === "Escape") {
+      SD.sel = -1;
+      sdDraw();
+      ev.preventDefault(); ev.stopPropagation();
+    }
+  }
+
+  function sdToast(msg) {
+    var t = $("#sd-toast");
+    if (t) t.textContent = msg || "";
+  }
+
   function sdPlace(v) {
     if (SD.sel < 0 || SD.done || SD.given[SD.sel]) return;
+    sdToast("");           // clear "this grid only goes up to 6"
     SD.cells[SD.sel] = v;
     sdSave();
     sdDraw();
@@ -925,10 +1025,16 @@
       SD.cells = saved.cells;
       SD.done = !!saved.done;
     }
+    if (!SD.keysBound) {
+      SD.keysBound = true;
+      $("#sd-grid").addEventListener("keydown", sdKey);
+    }
     $("#sd-hint").textContent = (SD.size === 6
       ? "Fill every row, column and 2x3 box with 1 to 6. "
       : "Fill every row, column and 3x3 box with 1 to 9. ")
-      + "You never have to guess - every square can be worked out.";
+      + "Pick a square and type a number, or tap the buttons. Arrow keys move, "
+      + "Backspace erases. You never have to guess - every square can be "
+      + "worked out.";
     $("#sd-toast").textContent = SD.done ? "Solved it! 🎉" : "";
     paintStreak("sudoku", "sd-streak");
     sdDraw();
