@@ -777,7 +777,10 @@
   }
 
   // ---------- sudoku ----------
-  var SD = { size: 6, boxR: 2, boxC: 3, given: [], cells: [], sol: [], sel: -1, done: false, level: "easy" };
+  // focusWanted stays false until the child actually picks a square, so the
+  // page never steals focus (and scrolls itself to the Sudoku) on load.
+  var SD = { size: 6, boxR: 2, boxC: 3, given: [], cells: [], sol: [], sel: -1,
+             done: false, level: "easy", focusWanted: false };
 
   // A 6x6 can only be made so hard - below about 12 clues it stops being
   // solvable without guessing at all. So the way up is a bigger grid, and
@@ -874,14 +877,25 @@
         b.addEventListener("click", function () {
           if (SD.done || SD.given[idx]) return;
           SD.sel = (SD.sel === idx) ? -1 : idx;
+          // Safari and Firefox on macOS do NOT focus a <button> when you click
+          // it. Without this the square highlighted, the keystrokes went to the
+          // page body, and the grid listener never heard them - which looked
+          // exactly like "typing doesn't work".
+          SD.focusWanted = SD.sel >= 0;
           sdDraw();
         });
       })(i);
       grid.appendChild(b);
     }
-    if (hadFocus) {
+    // Put focus on the live square: either it was already in the grid and the
+    // rebuild destroyed it, or the child just picked a square and the browser
+    // declined to focus it. preventScroll stops the page jumping on every
+    // keystroke.
+    if (hadFocus || SD.focusWanted) {
       var keep = grid.children[SD.sel >= 0 ? SD.sel : tabCell];
-      if (keep && !keep.disabled) keep.focus();
+      if (keep && !keep.disabled) {
+        try { keep.focus({ preventScroll: true }); } catch (e) { keep.focus(); }
+      }
     }
 
     var pad = $("#sd-pad");
@@ -907,6 +921,7 @@
 
   function sdSelect(i) {
     SD.sel = i;
+    SD.focusWanted = true;
     sdDraw();
   }
 
@@ -1018,7 +1033,7 @@
     SD.given = pz.puzzle.map(function (v) { return v !== 0; });
     SD.cells = pz.puzzle.slice();
     SD.sol = String(dec(pz.solution)).split(",").map(Number);
-    SD.sel = -1; SD.done = false;
+    SD.sel = -1; SD.done = false; SD.focusWanted = false;
 
     var saved = load("sudoku-" + SD.level);
     if (saved && Array.isArray(saved.cells) && saved.cells.length === SD.cells.length) {
