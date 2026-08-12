@@ -304,6 +304,8 @@ content — only a redeploy.
 
 | What | Where | Now | To make it easier |
 |---|---|---|---|
+| Crossword grid | `crossword.py` → `TEMPLATES["easy"]` / `["hard"]` | plus / banded | reorder; the first shape that fills is used |
+| Crossword words | `crossword.py` → `WORDS` | 314 | add `(WORD, clue)` pairs — more words means denser grids become possible |
 | 6×6 Sudoku | `sudoku.py` → `SPECS[6]["givens"]` | `12` | raise it — `15` is where it was |
 | 9×9 Sudoku | `sudoku.py` → `SPECS[9]["givens"]` | `44` | raise it; below ~36 it gets long |
 | Wordle clue lock | `static/app.js` → `WL_CLUE_AFTER` | `3` guesses | set to `0` for the clue straight away |

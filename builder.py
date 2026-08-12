@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
+import crossword
 import fallback
 import llm
 import safety
@@ -461,9 +462,23 @@ def build(day: date) -> dict:
         log.exception("sudoku generation failed")
         puzzles = None
 
+    # Same reasoning as the Sudoku: a crossword whose crossings disagree cannot
+    # be finished, and a child experiences that as her own failure rather than
+    # ours. So it is built and proved here, never asked for.
+    try:
+        xword = crossword.daily(day)
+        if not (crossword.is_valid(xword.get("easy"))
+                and crossword.is_valid(xword.get("hard"))):
+            log.error("generated crossword failed validation - omitting it")
+            xword = None
+    except Exception:  # noqa: BLE001
+        log.exception("crossword generation failed")
+        xword = None
+
     payload = {
         "date": day.isoformat(),
         "sudoku": puzzles,
+        "crossword": xword,
         "date_pretty": day.strftime("%A, %B %d, %Y").replace(" 0", " "),
         "generated_at": datetime.now(TZ).isoformat(),
         **creative,

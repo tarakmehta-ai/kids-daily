@@ -46,6 +46,7 @@
     <a href="#s-wordle">🟩 Guess</a>
     <a href="#s-conn">🔗 Groups</a>
     <a href="#s-sudoku">🔢 Sudoku</a>
+    <a href="#s-crossword">✏️ Crossword</a>
     <a href="#s-history">🕰️ History</a>
     <a href="#s-joke">😄 Joke</a>
     <a href="#s-story">💛 Story</a>
@@ -220,6 +221,39 @@
       </div>
     </section>
 
+    <section id="s-crossword">
+      <div class="sec-head">
+        <div class="ico">✏️</div>
+        <div>
+          <h2>Mini Crossword</h2>
+          <p class="sub">Tap a square and type. Tap again to switch across and down.</p>
+        </div>
+      </div>
+      <div class="game">
+        <div class="xw-cluebar" id="xw-cluebar">
+          <button class="xw-arrow" id="xw-prev" aria-label="Previous clue">‹</button>
+          <div class="xw-current" id="xw-current"></div>
+          <button class="xw-arrow" id="xw-next" aria-label="Next clue">›</button>
+        </div>
+        <div class="xw-wrap">
+          <div class="xw-grid" id="xw-grid"></div>
+        </div>
+        <div class="toast" id="xw-toast"></div>
+        <div class="streak" id="xw-streak"></div>
+        <div class="kb" id="xw-kb"></div>
+        <div class="xw-clues">
+          <div class="xw-list">
+            <h3>Across</h3>
+            <ol id="xw-across"></ol>
+          </div>
+          <div class="xw-list">
+            <h3>Down</h3>
+            <ol id="xw-down"></ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section id="s-history">
       <div class="sec-head">
         <div class="ico">🕰️</div>
@@ -280,6 +314,7 @@
           <option value="s-wordle">Guess the Word</option>
           <option value="s-conn">Make Four Groups</option>
           <option value="s-sudoku">Sudoku</option>
+          <option value="s-crossword">Mini Crossword</option>
           <option value="s-history">On This Day</option>
           <option value="s-joke">Joke of the Day</option>
           <option value="s-story">Story of the Day</option>

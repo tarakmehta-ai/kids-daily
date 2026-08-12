@@ -595,6 +595,7 @@
         // this, Backspace would erase a Sudoku square AND delete a Wordle
         // letter in the same keystroke - the same class of bug as above.
         if (inSection(ev.target, "s-sudoku")) return;
+        if (inSection(ev.target, "s-crossword")) return;
         if (ev.key === "Enter") wlKey("ENTER");
         else if (ev.key === "Backspace") wlKey("BACK");
         else if (ev.key === "Escape") { WL.current = ""; wlToast(""); wlDrawBoard(); }
@@ -1055,6 +1056,347 @@
     sdDraw();
   }
 
+  // ---------- mini crossword ----------
+  // Same keyboard discipline as the Sudoku: everything is bound to the grid,
+  // so a key only counts when a square is focused and the three games can
+  // never fight over Backspace.
+
+  var XW = { size: 5, pattern: [], entries: [], sol: [], cells: [],
+             sel: -1, dir: "across", done: false, level: "easy",
+             focusWanted: false, keysBound: false };
+
+  function xwPuzzle() {
+    var all = DATA.crossword;
+    if (!all) return null;
+    var want = AGE === "11" ? "hard" : "easy";
+    return all[want] || all.easy || all.hard || null;
+  }
+
+  function xwBlock(i) { return XW.cells[i] === null; }
+
+  // Every entry that passes through a cell, so clicking anywhere knows what
+  // word it is part of.
+  function xwEntryAt(idx, dir) {
+    var n = XW.size, r = Math.floor(idx / n), c = idx % n;
+    for (var i = 0; i < XW.entries.length; i++) {
+      var e = XW.entries[i];
+      if (e.dir !== dir) continue;
+      if (e.dir === "across" && e.row === r && c >= e.col && c < e.col + e.len) return e;
+      if (e.dir === "down" && e.col === c && r >= e.row && r < e.row + e.len) return e;
+    }
+    return null;
+  }
+
+  function xwCurrent() { return XW.sel < 0 ? null : xwEntryAt(XW.sel, XW.dir); }
+
+  function xwCellsOf(e) {
+    var out = [];
+    for (var k = 0; k < e.len; k++) {
+      out.push(e.dir === "across" ? e.row * XW.size + (e.col + k)
+                                  : (e.row + k) * XW.size + e.col);
+    }
+    return out;
+  }
+
+  function xwSave() {
+    store("xw-" + XW.level, { cells: XW.cells, done: XW.done });
+  }
+
+  function xwNumbers() {
+    var map = {};
+    XW.entries.forEach(function (e) {
+      map[e.row * XW.size + e.col] = e.number;
+    });
+    return map;
+  }
+
+  function xwDraw() {
+    var grid = $("#xw-grid");
+    if (!grid) return;
+    var n = XW.size;
+    grid.style.gridTemplateColumns = "repeat(" + n + ", 1fr)";
+    var hadFocus = grid.contains(document.activeElement);
+    grid.innerHTML = "";
+    var nums = xwNumbers();
+    var cur = xwCurrent();
+    var lit = {};
+    if (cur) xwCellsOf(cur).forEach(function (i) { lit[i] = 1; });
+
+    for (var i = 0; i < n * n; i++) {
+      var b = el("button", "xw-cell");
+      b.type = "button";
+      if (xwBlock(i)) {
+        b.className = "xw-cell block";
+        b.disabled = true;
+        b.tabIndex = -1;
+        grid.appendChild(b);
+        continue;
+      }
+      b.tabIndex = (i === XW.sel) ? 0 : -1;
+      if (lit[i]) b.classList.add("lit");
+      if (i === XW.sel) b.classList.add("sel");
+      if (nums[i]) {
+        var tag = el("span", "num", String(nums[i]));
+        b.appendChild(tag);
+      }
+      b.appendChild(el("span", "ch", XW.cells[i] || ""));
+      b.disabled = XW.done;
+      (function (idx) {
+        b.addEventListener("click", function () {
+          if (XW.done) return;
+          if (XW.sel === idx) {
+            // Second tap on the same square flips across/down, the way the
+            // Mini does. Only if there is actually a word the other way.
+            var other = XW.dir === "across" ? "down" : "across";
+            if (xwEntryAt(idx, other)) XW.dir = other;
+          } else {
+            XW.sel = idx;
+            if (!xwEntryAt(idx, XW.dir)) {
+              XW.dir = XW.dir === "across" ? "down" : "across";
+            }
+          }
+          XW.focusWanted = true;
+          xwDraw();
+        });
+      })(i);
+      grid.appendChild(b);
+    }
+
+    if (hadFocus || XW.focusWanted) {
+      var keep = grid.children[XW.sel];
+      if (keep && !keep.disabled) {
+        try { keep.focus({ preventScroll: true }); } catch (e) { keep.focus(); }
+      }
+    }
+    xwPaintClues();
+  }
+
+  function xwPaintClues() {
+    var cur = xwCurrent();
+    var bar = $("#xw-current");
+    if (bar) {
+      bar.textContent = cur ? (cur.number + " " + cur.dir + " — " + cur.clue)
+                            : "Tap a square to start";
+    }
+    ["across", "down"].forEach(function (dir) {
+      var box = $("#xw-" + dir);
+      if (!box) return;
+      box.innerHTML = "";
+      XW.entries.filter(function (e) { return e.dir === dir; })
+        .sort(function (a, b) { return a.number - b.number; })
+        .forEach(function (e) {
+          var li = el("li", "xw-clue");
+          li.appendChild(el("b", null, String(e.number)));
+          li.appendChild(document.createTextNode(" " + e.clue));
+          if (cur && cur.number === e.number && cur.dir === e.dir) {
+            li.classList.add("on");
+          }
+          if (xwEntryDone(e)) li.classList.add("filled");
+          li.addEventListener("click", function () {
+            XW.dir = e.dir;
+            XW.sel = xwCellsOf(e)[0];
+            XW.focusWanted = true;
+            xwDraw();
+          });
+          box.appendChild(li);
+        });
+    });
+  }
+
+  function xwEntryDone(e) {
+    return xwCellsOf(e).every(function (i) { return !!XW.cells[i]; });
+  }
+
+  function xwStep(delta) {
+    // Move within the current word, skipping nothing - a mini is small enough
+    // that landing on a filled square and typing over it is what you want.
+    var cur = xwCurrent();
+    if (!cur) return;
+    var cells = xwCellsOf(cur);
+    var at = cells.indexOf(XW.sel);
+    var next = at + delta;
+    if (next >= 0 && next < cells.length) {
+      XW.sel = cells[next];
+      XW.focusWanted = true;
+    }
+  }
+
+  function xwMove(dr, dc) {
+    var n = XW.size, r = Math.floor(XW.sel / n), c = XW.sel % n;
+    for (var s = 0; s < n; s++) {
+      r += dr; c += dc;
+      if (r < 0 || r >= n || c < 0 || c >= n) return;
+      var idx = r * n + c;
+      if (!xwBlock(idx)) {
+        XW.sel = idx;
+        XW.dir = dr !== 0 ? "down" : "across";
+        if (!xwEntryAt(idx, XW.dir)) XW.dir = XW.dir === "across" ? "down" : "across";
+        XW.focusWanted = true;
+        return;
+      }
+    }
+  }
+
+  function xwJumpClue(delta) {
+    var cur = xwCurrent();
+    var order = XW.entries.slice().sort(function (a, b) {
+      if (a.dir !== b.dir) return a.dir === "across" ? -1 : 1;
+      return a.number - b.number;
+    });
+    var at = cur ? order.findIndex(function (e) {
+      return e.number === cur.number && e.dir === cur.dir;
+    }) : -1;
+    var next = order[((at + delta) % order.length + order.length) % order.length];
+    if (!next) return;
+    XW.dir = next.dir;
+    XW.sel = xwCellsOf(next)[0];
+    XW.focusWanted = true;
+    xwDraw();
+  }
+
+  function xwPut(ch) {
+    if (XW.sel < 0 || XW.done || xwBlock(XW.sel)) return;
+    XW.cells[XW.sel] = ch;
+    xwSave();
+    if (ch) xwStep(1);
+    xwDraw();
+    xwCheck();
+  }
+
+  function xwErase() {
+    if (XW.sel < 0 || XW.done) return;
+    if (XW.cells[XW.sel]) {
+      XW.cells[XW.sel] = "";
+    } else {
+      xwStep(-1);
+      if (XW.sel >= 0) XW.cells[XW.sel] = "";
+    }
+    xwSave();
+    xwDraw();
+  }
+
+  function xwCheck() {
+    for (var i = 0; i < XW.cells.length; i++) {
+      if (XW.cells[i] === null) continue;          // black square
+      if (!XW.cells[i] || XW.cells[i] !== XW.sol[i]) return;
+    }
+    XW.done = true;
+    XW.sel = -1;
+    xwSave();
+    var st = STREAK.win("crossword");
+    $("#xw-toast").textContent = "Finished it! ✏️🎉";
+    paintStreak("crossword", "xw-streak");
+    TRACK.push({ type: "xword_result", section: "s-crossword", solved: true,
+                 streak: st.streak });
+    xwDraw();
+  }
+
+  function xwKey(ev) {
+    if (XW.done || ev.metaKey || ev.ctrlKey || ev.altKey) return;
+    var k = ev.key;
+    if (/^[a-zA-Z]$/.test(k)) {
+      xwPut(k.toUpperCase());
+      ev.preventDefault(); ev.stopPropagation();
+      return;
+    }
+    if (k === "Backspace" || k === "Delete") {
+      xwErase(); ev.preventDefault(); ev.stopPropagation(); return;
+    }
+    var arrows = { ArrowUp: [-1, 0], ArrowDown: [1, 0],
+                   ArrowLeft: [0, -1], ArrowRight: [0, 1] };
+    if (arrows[k]) {
+      xwMove(arrows[k][0], arrows[k][1]);
+      xwDraw(); ev.preventDefault(); ev.stopPropagation(); return;
+    }
+    if (k === " " || k === "Spacebar") {
+      var other = XW.dir === "across" ? "down" : "across";
+      if (XW.sel >= 0 && xwEntryAt(XW.sel, other)) { XW.dir = other; xwDraw(); }
+      ev.preventDefault(); ev.stopPropagation(); return;
+    }
+    if (k === "Tab") {
+      xwJumpClue(ev.shiftKey ? -1 : 1);
+      ev.preventDefault(); ev.stopPropagation(); return;
+    }
+    if (k === "Enter") {
+      xwJumpClue(1); ev.preventDefault(); ev.stopPropagation();
+    }
+  }
+
+  function xwBuildKeyboard() {
+    var rows = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
+    var kb = $("#xw-kb");
+    if (!kb) return;
+    kb.innerHTML = "";
+    rows.forEach(function (r, idx) {
+      var row = el("div", "kb-row");
+      r.split("").forEach(function (ch) {
+        var b = el("button", "key", ch);
+        b.type = "button";
+        b.dataset.key = ch;
+        row.appendChild(b);
+      });
+      if (idx === 2) {
+        var d = el("button", "key wide", "Del");
+        d.type = "button";
+        d.dataset.key = "BACK";
+        row.appendChild(d);
+      }
+      kb.appendChild(row);
+    });
+    if (!kb.dataset.bound) {
+      kb.dataset.bound = "1";
+      kb.addEventListener("click", function (ev) {
+        var b = ev.target.closest(".key");
+        if (!b || XW.done) return;
+        b.blur();
+        if (b.dataset.key === "BACK") xwErase();
+        else xwPut(b.dataset.key);
+      });
+    }
+  }
+
+  function renderCrossword() {
+    var section = document.getElementById("s-crossword");
+    var pz = xwPuzzle();
+    if (!pz) { if (section) section.style.display = "none"; return; }
+    if (section) section.style.display = "";
+
+    XW.level = AGE === "11" ? "hard" : "easy";
+    XW.size = pz.size;
+    XW.pattern = pz.pattern || [];
+    XW.entries = (pz.entries || []).slice();
+    XW.done = false; XW.sel = -1; XW.dir = "across"; XW.focusWanted = false;
+
+    // null marks a black square; "" is an empty white one.
+    var solRows = String(dec(pz.answers)).split("|");
+    XW.sol = []; XW.cells = [];
+    for (var r = 0; r < XW.size; r++) {
+      for (var c = 0; c < XW.size; c++) {
+        var ch = (XW.pattern[r] || "")[c];
+        XW.sol.push(ch === "#" ? null : (solRows[r] || "")[c]);
+        XW.cells.push(ch === "#" ? null : "");
+      }
+    }
+
+    var saved = load("xw-" + XW.level);
+    if (saved && Array.isArray(saved.cells) && saved.cells.length === XW.cells.length) {
+      XW.cells = saved.cells;
+      XW.done = !!saved.done;
+    }
+
+    xwBuildKeyboard();
+    if (!XW.keysBound) {
+      XW.keysBound = true;
+      $("#xw-grid").addEventListener("keydown", xwKey);
+      var prev = $("#xw-prev"), next = $("#xw-next");
+      if (prev) prev.addEventListener("click", function () { xwJumpClue(-1); });
+      if (next) next.addEventListener("click", function () { xwJumpClue(1); });
+    }
+    $("#xw-toast").textContent = XW.done ? "Finished it! ✏️🎉" : "";
+    paintStreak("crossword", "xw-streak");
+    xwDraw();
+  }
+
   // ---------- summer check-in ----------
   function jrKey() { return "kd-journal"; }
   function jrAll() {
@@ -1147,7 +1489,7 @@
     document.querySelectorAll(".agebtn").forEach(function (b) {
       b.setAttribute("aria-pressed", String(b.dataset.age === age));
     });
-    if (DATA) { renderPuzzles(); renderSudoku(); renderWordle(); }
+    if (DATA) { renderPuzzles(); renderSudoku(); renderWordle(); renderCrossword(); }
   }
 
   // Highlight the nav pill for whichever section is currently in view, and
@@ -1250,6 +1592,7 @@
     renderWordle();
     renderConnections();
     renderSudoku();
+    renderCrossword();
     paintStreak("wordle", "wl-streak");
     paintStreak("groups", "cn-streak");
     renderHistory();

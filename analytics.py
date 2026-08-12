@@ -41,10 +41,12 @@ ENABLED = os.environ.get("ANALYTICS", "on").strip().lower() not in ("off", "0", 
 EVENT_TYPES = {
     "view", "session", "reveal", "joke_reveal", "wordle_result",
     "conn_result", "sudoku_result", "link_click", "age_switch",
+    "wordle_clue", "sudoku_level", "xword_result",
 }
 SECTIONS = {
     "s-news", "s-sports", "s-local", "s-word", "s-brain", "s-wordle",
-    "s-conn", "s-sudoku", "s-history", "s-joke", "s-story", "s-feedback",
+    "s-conn", "s-sudoku", "s-crossword", "s-history", "s-joke", "s-story",
+    "s-feedback", "s-summer",
 }
 SECTION_LABELS = {
     "s-news": "Today's News",
@@ -56,6 +58,8 @@ SECTION_LABELS = {
     "s-wordle": "Guess the Word",
     "s-conn": "Make Four Groups",
     "s-sudoku": "Sudoku",
+    "s-crossword": "Mini Crossword",
+    "s-summer": "Summer Check-In",
     "s-history": "On This Day",
     "s-joke": "Joke of the Day",
     "s-story": "Story of the Day",

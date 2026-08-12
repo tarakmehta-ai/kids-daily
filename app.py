@@ -74,6 +74,17 @@ def _hide_answers(payload: dict) -> dict:
         node = (out.get("sudoku") or {}).get(level)
         if isinstance(node, dict) and node.get("solution"):
             node["solution"] = _enc(",".join(str(v) for v in node["solution"]))
+    # The crossword is worse than the others if handled carelessly: each entry
+    # carries its own answer right next to its clue. Strip those out entirely
+    # and send one encoded solution grid, which is all the page needs to check.
+    for level in ("easy", "hard"):
+        node = (out.get("crossword") or {}).get(level)
+        if not isinstance(node, dict):
+            continue
+        if node.get("answers"):
+            node["answers"] = _enc("|".join(node["answers"]))
+        for entry in node.get("entries") or []:
+            entry.pop("answer", None)
     out["_encoded"] = True
     return out
 
