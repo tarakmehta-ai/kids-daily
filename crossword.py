@@ -382,24 +382,26 @@ CLUES = {w: c for w, c in WORDS}
 
 TEMPLATES = {
     "easy": [
-        # plus - 100%. Four 3-letter entries and two 5s. Looks like a Mini.
-        ["##.##",
-         "#...#",
-         ".....",
-         "#...#",
-         "##.##"],
-        # zig - 100%. Staircase of 3s and 4s.
+        # zig - 100%. Eight entries, four of them four-letter. This replaced
+        # the plus below as the first choice: she finished that one too fast.
         ["#....",
          ".#...",
          "..#..",
          "...#.",
          "....#"],
-        # stairs - 83%, kept as a third chance rather than a first choice.
-        ["...##",
-         "...##",
+        # cross - 100%. Only five entries, but every one is five letters, so
+        # it is more satisfying than a grid of three-letter gimmes.
+        ["..#..",
+         "..#..",
          ".....",
-         "##...",
-         "##..."],
+         "..#..",
+         "..#.."],
+        # plus - 100%. The gentlest shape, kept last as a safety net.
+        ["##.##",
+         "#...#",
+         ".....",
+         "#...#",
+         "##.##"],
     ],
     "hard": [
         # banded - 100%. Five interlocking five-letter words, no short gimmes.
@@ -414,14 +416,12 @@ TEMPLATES = {
          ".....",
          ".#.#.",
          ".#.#."],
-        # stairs - 83%, mixed 3s and 5s. Easier, so it sits last.
-        ["...##",
-         "...##",
-         ".....",
-         "##...",
-         "##..."],
     ],
 }
+# "stairs" used to sit at the end of both lists on a measured 83% fill rate.
+# That number was wrong: it came from a probe that only asked whether the grid
+# filled, not whether the words it produced were real. Re-measured against the
+# corrected fill it is 0%, so it never fired at all. Removed.
 
 MIN_LEN = 3   # a two-letter entry is not a word anybody wants to clue
 

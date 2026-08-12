@@ -32,12 +32,17 @@ from datetime import date
 #
 # size -> (box_rows, box_cols, target clues to leave)
 SPECS = {
-    # age 9: pushed to the floor of what a 6x6 can be. Below about 12 clues a
-    # 2x3 grid stops being uniquely solvable by singles at all, so this is as
-    # hard as this size honestly goes - measured, not guessed. If she still
-    # finds it easy the answer is a bigger grid, not fewer clues, which is why
-    # the page now lets her switch to the 9x9 without changing her level.
-    6: {"box_r": 2, "box_c": 3, "givens": 12},
+    # age 9: back to 14 after 12 was reported as too hard.
+    #
+    # Worth recording why this number barely matters. Symmetric clue removal
+    # takes cells in pairs, so a 6x6 can only really land on 12 clues (~24
+    # deductions) or 14 (~22). That is the entire dynamic range of this grid
+    # size: two clues, two deductions. A puzzle cannot go from "a bit too easy"
+    # to "too hard" across that gap, so if it still feels too hard the cause is
+    # almost certainly that the 9x9 grid got selected and stuck - not this
+    # number. When in doubt, 14 is the forgiving end, and giving up is a worse
+    # failure than finishing quickly.
+    6: {"box_r": 2, "box_c": 3, "givens": 14},
     # age 11: more clues than before (was 38) AND singles-only, which is the
     # change that actually matters - the old grid could need techniques she had
     # no way to know.

@@ -1045,6 +1045,21 @@
       SD.keysBound = true;
       $("#sd-grid").addEventListener("keydown", sdKey);
     }
+    // Choosing the 9x9 sticks for good, so a child who tapped it once out of
+    // curiosity gets the big grid every morning afterwards and has no idea
+    // why Sudoku suddenly got hard. Say so, plainly, with the way back.
+    var note = $("#sd-note");
+    if (note) {
+      var deflt = AGE === "11" ? "hard" : "easy";
+      if (SD.level !== deflt) {
+        note.textContent = SD.level === "hard"
+          ? "You're on the big 9×9 grid — tap 6×6 above for the smaller one."
+          : "You're on the small 6×6 grid — tap 9×9 above for the bigger one.";
+        note.style.display = "";
+      } else {
+        note.style.display = "none";
+      }
+    }
     $("#sd-hint").textContent = (SD.size === 6
       ? "Fill every row, column and 2x3 box with 1 to 6. "
       : "Fill every row, column and 3x3 box with 1 to 9. ")

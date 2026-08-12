@@ -864,3 +864,8 @@ footer {
   html { scroll-behavior: auto; }
   * { animation: none !important; transition: none !important; }
 }
+
+.sd-note {
+  max-width: 420px; margin: -6px auto 12px; text-align: center;
+  color: #ffd54a; font-size: .85rem; font-weight: 600;
+}
