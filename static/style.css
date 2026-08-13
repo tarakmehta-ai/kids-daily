@@ -869,3 +869,23 @@ footer {
   max-width: 420px; margin: -6px auto 12px; text-align: center;
   color: #ffd54a; font-size: .85rem; font-weight: 600;
 }
+
+/* ---- connections hint ---- */
+.cn-hintbar { text-align: center; margin-bottom: 14px; }
+.cn-hintbar .btn {
+  background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .3);
+  color: #cfe0f0; font-size: .82rem; padding: 7px 16px;
+}
+.cn-hints { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.cn-hint-row {
+  display: inline-flex; align-items: center; gap: 8px; justify-content: center;
+  color: #fff; font-size: .92rem; animation: pop .25s ease;
+}
+.cn-hint-tag {
+  font-size: .72rem; font-weight: 700; letter-spacing: .07em;
+  text-transform: uppercase; color: #9fc4e8;
+}
+.cn-hint-row b {
+  background: rgba(255, 213, 74, .22); border: 1px solid rgba(255, 213, 74, .45);
+  padding: 3px 12px; border-radius: 999px; font-size: .88rem;
+}

@@ -605,7 +605,65 @@
   }
 
   // ---------- connections ----------
-  var CN = { groups: [], tiles: [], selected: [], solved: [], mistakes: 0, done: false };
+  var CN = { groups: [], tiles: [], selected: [], solved: [], mistakes: 0,
+             done: false, hints: [] };
+
+  // A hint names the category of the easiest group still unsolved - it tells
+  // you WHAT you are looking for without telling you which four words. It only
+  // unlocks after a wrong guess, so it can't be used as a shortcut straight
+  // past the puzzle.
+  function cnHintable() {
+    var out = [];
+    for (var i = 0; i < CN.groups.length; i++) {
+      if (CN.solved.indexOf(i) !== -1) continue;
+      if (CN.hints.indexOf(i) !== -1) continue;
+      out.push(i);
+    }
+    out.sort(function (a, b) {
+      return (CN.groups[a].difficulty || 1) - (CN.groups[b].difficulty || 1);
+    });
+    return out;
+  }
+
+  function cnPaintHints() {
+    var btn = $("#cn-hint-btn"), box = $("#cn-hints");
+    if (!btn || !box) return;
+
+    box.innerHTML = "";
+    CN.hints.forEach(function (gi) {
+      var g = CN.groups[gi];
+      if (!g) return;
+      var row = el("div", "cn-hint-row");
+      row.appendChild(el("span", "cn-hint-tag", "One group is"));
+      row.appendChild(el("b", null, g.name));
+      box.appendChild(row);
+    });
+
+    if (CN.done) { btn.style.display = "none"; return; }
+    btn.style.display = "";
+    var left = cnHintable().length;
+    if (CN.mistakes < 1) {
+      btn.disabled = true;
+      btn.textContent = "Hint unlocks after a wrong guess";
+    } else if (!left) {
+      btn.disabled = true;
+      btn.textContent = "No more hints";
+    } else {
+      btn.disabled = false;
+      btn.textContent = CN.hints.length ? "Another hint" : "Stuck? Get a hint";
+    }
+  }
+
+  function cnHint() {
+    if (CN.done || CN.mistakes < 1) return;
+    var next = cnHintable()[0];
+    if (next === undefined) return;
+    CN.hints.push(next);
+    cnSave();
+    TRACK.push({ type: "conn_hint", section: "s-conn",
+                 after_mistakes: CN.mistakes });
+    cnDraw();
+  }
 
   function cnGroupOf(word) {
     for (var i = 0; i < CN.groups.length; i++) {
@@ -648,10 +706,12 @@
     }
     $("#cn-submit").disabled = CN.selected.length !== 4 || CN.done;
     $("#cn-clear").disabled = !CN.selected.length || CN.done;
+    cnPaintHints();
   }
 
   function cnSave() {
-    store("conn", { solved: CN.solved, mistakes: CN.mistakes, done: CN.done });
+    store("conn", { solved: CN.solved, mistakes: CN.mistakes, done: CN.done,
+                    hints: CN.hints });
   }
 
   function cnSubmit() {
@@ -705,14 +765,17 @@
     CN.groups.forEach(function (g) { all = all.concat(g.words); });
     CN.tiles = seededShuffle(all, DATA.date);
     CN.selected = []; CN.solved = []; CN.mistakes = 0; CN.done = false;
+    CN.hints = [];
 
     var saved = load("conn");
     if (saved && Array.isArray(saved.solved)) {
       CN.solved = saved.solved;
       CN.mistakes = saved.mistakes || 0;
       CN.done = !!saved.done;
+      CN.hints = Array.isArray(saved.hints) ? saved.hints : [];
     }
     $("#cn-submit").addEventListener("click", cnSubmit);
+    $("#cn-hint-btn").addEventListener("click", cnHint);
     $("#cn-clear").addEventListener("click", function () { CN.selected = []; cnToast(""); cnDraw(); });
     $("#cn-shuffle").addEventListener("click", function () {
       CN.tiles = seededShuffle(CN.tiles, String(Math.random()));

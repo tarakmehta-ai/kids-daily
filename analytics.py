@@ -41,7 +41,7 @@ ENABLED = os.environ.get("ANALYTICS", "on").strip().lower() not in ("off", "0", 
 EVENT_TYPES = {
     "view", "session", "reveal", "joke_reveal", "wordle_result",
     "conn_result", "sudoku_result", "link_click", "age_switch",
-    "wordle_clue", "sudoku_level", "xword_result",
+    "wordle_clue", "sudoku_level", "xword_result", "conn_hint",
 }
 SECTIONS = {
     "s-news", "s-sports", "s-local", "s-word", "s-brain", "s-wordle",
