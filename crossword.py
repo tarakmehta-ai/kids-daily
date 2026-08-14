@@ -355,6 +355,253 @@ WORDS: list[tuple[str, str]] = [
     ("RAINBOW", "Colours after the rain"),
     ("SANDALS", "Summer shoes with gaps"),
     ("THUNDER", "The bang after the lightning"),
+
+    # -----------------------------------------------------------------------
+    # Second wave. The first bank was 314 words and every grid bigger or denser
+    # than a 5x5 measured 0% - not slow, impossible. A dense grid needs a deep
+    # word list far more than it needs a clever search, so this roughly triples
+    # the five, six and seven letter stock, which is where the shortage was.
+    # -----------------------------------------------------------------------
+
+    # --- more 5 letters ---
+    ("ABOVE", "Higher up"), ("ALARM", "It wakes you up"),
+    ("ALIEN", "Creature from another planet"), ("ANGLE", "Two lines meeting at a corner"),
+    ("ANKLE", "Joint above your foot"), ("APRON", "Wear it to cook without mess"),
+    ("ARENA", "Big place where the match happens"), ("ARROW", "It points the way"),
+    ("AWARD", "A prize for doing well"), ("BACON", "Crispy breakfast strips"),
+    ("BADGE", "Pin that shows what you did"), ("BAKER", "Person who makes the bread"),
+    ("BEAST", "A big wild creature"), ("BENCH", "Long seat in the park"),
+    ("BERRY", "Small soft fruit"), ("BLACK", "Colour of the night sky"),
+    ("BLADE", "Sharp part of a knife"), ("BLAST", "A big bang"),
+    ("BLEND", "Mix together smoothly"), ("BLOCK", "Cube for building"),
+    ("BLOOM", "When a flower opens"), ("BOARD", "Flat plank, or you play chess on it"),
+    ("BOOST", "Give it a push upwards"), ("BRAIN", "You think with it"),
+    ("BRAKE", "It stops the bike"), ("BRASS", "Shiny yellow metal for trumpets"),
+    ("BREAK", "Playtime between lessons"), ("BRICK", "Red block for a wall"),
+    ("BROOM", "You sweep with it"), ("BROWN", "The colour of chocolate"),
+    ("BUDDY", "A pal"), ("BUILD", "Make it out of parts"),
+    ("CABIN", "Small wooden house"), ("CANDY", "Sweets"),
+    ("CANOE", "Narrow boat you paddle"), ("CATCH", "Grab the ball"),
+    ("CHAIN", "Metal loops joined up"), ("CHALK", "Write on the board with it"),
+    ("CHASE", "Run after someone"), ("CHEEK", "Side of your face"),
+    ("CHEER", "Shout for your team"), ("CHEST", "Where a pirate keeps treasure"),
+    ("CHICK", "Baby hen"), ("CHOIR", "Group that sings together"),
+    ("CLASS", "Your group at school"), ("CLEAN", "Not dirty"),
+    ("CLEAR", "Easy to see through"), ("CLIFF", "Rock face with a long drop"),
+    ("CLIMB", "Go up it"), ("CLOCK", "It tells the time on the wall"),
+    ("CLOTH", "A piece of fabric"), ("COACH", "The one who trains the team"),
+    ("COAST", "Where the land meets the sea"), ("COCOA", "Hot chocolate powder"),
+    ("COMET", "Space snowball with a tail"), ("COUCH", "Sofa"),
+    ("COUNT", "One, two, three..."), ("COURT", "Where tennis is played"),
+    ("CRANE", "Tall machine that lifts"), ("CRASH", "A loud smash"),
+    ("CRAWL", "Move on hands and knees"), ("CREAM", "Thick and white, on a cake"),
+    ("CROSS", "Go over to the other side"), ("CROWD", "Lots of people together"),
+    ("CRUMB", "Tiny bit left on the plate"), ("CURLY", "Hair full of loops"),
+    ("CURVE", "A bendy line"), ("DAISY", "White flower, yellow middle"),
+    ("DANCE", "Move to the music"), ("DIARY", "Book you write your days in"),
+    ("DIZZY", "Everything is spinning"), ("DODGE", "Jump out of the way"),
+    ("DOUGH", "Bread before it bakes"), ("DOZEN", "Twelve of them"),
+    ("DRAIN", "Water goes down it"), ("DREAM", "The story in your head asleep"),
+    ("DRESS", "Pull it over your head"), ("DRIFT", "Float slowly along"),
+    ("DRILL", "Tool that makes holes"), ("DRINK", "Water or juice"),
+    ("DRIVE", "Steer the car"), ("EAGLE", "Big bird with a hooked beak"),
+    ("EARLY", "Before the usual time"), ("ELBOW", "Joint in your arm"),
+    ("EMPTY", "Nothing inside"), ("ENJOY", "Have a good time"),
+    ("ENTER", "Go inside"), ("EQUAL", "Exactly the same amount"),
+    ("EXTRA", "More than you need"), ("FEAST", "A huge meal"),
+    ("FENCE", "It goes round the garden"), ("FIFTY", "Half of a hundred"),
+    ("FINAL", "The very last one"), ("FIRST", "Number one"),
+    ("FLAME", "The bright part of a fire"), ("FLASH", "A quick burst of light"),
+    ("FLOAT", "Sit on top of the water"), ("FLOCK", "A group of sheep"),
+    ("FLOOR", "You walk on it indoors"), ("FLOUR", "White powder for baking"),
+    ("FOCUS", "Pay close attention"), ("FORCE", "A push or a pull"),
+    ("FRAME", "It goes round a picture"), ("FRESH", "Just picked"),
+    ("FRONT", "Opposite of the back"), ("FROWN", "Opposite of a smile"),
+    ("FRUIT", "Apples, pears and bananas"), ("FUNNY", "It makes you laugh"),
+    ("GIANT", "Absolutely enormous"), ("GLASS", "You drink from it"),
+    ("GLIDE", "Move smoothly, no effort"), ("GLOBE", "A round map of the world"),
+    ("GLOVE", "It goes on your hand"), ("GOOSE", "Big honking bird"),
+    ("GRAIN", "One tiny seed of wheat"), ("GRAND", "Big and impressive"),
+    ("GRAVY", "Brown sauce for dinner"), ("GREAT", "Really very good"),
+    ("GREEN", "The colour of grass"), ("GROUP", "A bunch of them together"),
+    ("GUARD", "Someone who keeps watch"), ("GUEST", "Someone who comes to stay"),
+    ("GUIDE", "Person who shows you round"), ("HAPPY", "Full of cheer"),
+    ("HEDGE", "A wall made of bushes"), ("HELLO", "What you say first"),
+    ("HOBBY", "What you do for fun"), ("HOTEL", "You sleep there on holiday"),
+    ("HOUSE", "Where a family lives"), ("HUMAN", "A person"),
+    ("HURRY", "Go faster!"), ("JELLY", "Wobbly pudding"),
+    ("JOLLY", "Cheerful and merry"), ("KNEEL", "Go down on your knees"),
+    ("KOALA", "Australian animal in a gum tree"), ("LARGE", "Big"),
+    ("LAUGH", "What a joke makes you do"), ("LAYER", "One level on top of another"),
+    ("LEARN", "Find out how to do it"), ("LEVEL", "Perfectly flat"),
+    ("LOCAL", "From round here"), ("LOOSE", "Not tight"),
+    ("LUCKY", "Good things keep happening"), ("LUNCH", "The middle meal"),
+    ("MAGIC", "Tricks and wands"), ("MAPLE", "Tree with syrup"),
+    ("MARCH", "Walk in step"), ("MARSH", "Soft wet ground"),
+    ("METAL", "Iron, gold or tin"), ("MIGHT", "It just possibly could"),
+    ("MODEL", "A small copy of something"), ("MONTH", "Thirty days or so"),
+    ("MOUNT", "Climb up onto it"), ("MOUTH", "You eat with it"),
+    ("MUNCH", "Chew away noisily"), ("NOISE", "A loud sound"),
+    ("NORTH", "The top of the map"), ("NOVEL", "A long story book"),
+    ("NURSE", "Looks after you at the hospital"), ("OLIVE", "Small green fruit in a jar"),
+    ("ONION", "It has layers and makes you cry"), ("ORBIT", "Circle round a planet"),
+    ("ORDER", "Put them in the right line"), ("OTTER", "Playful river swimmer"),
+    ("OUTER", "On the outside"), ("PAPER", "You write on it"),
+    ("PARTY", "Cake, games and friends"), ("PATCH", "Square sewn over a hole"),
+    ("PEACH", "Fuzzy orange fruit"), ("PEARL", "White gem from an oyster"),
+    ("PEDAL", "Push it round on a bike"), ("PENNY", "The smallest coin"),
+    ("PHONE", "You call people on it"), ("PIECE", "One bit of the puzzle"),
+    ("PLACE", "A spot where something is"), ("PLAIN", "Nothing fancy about it"),
+    ("PLANE", "It flies you abroad"), ("PLATE", "Dinner goes on it"),
+    ("POINT", "The sharp end"), ("POLAR", "To do with the frozen ends of Earth"),
+    ("POUND", "British money"), ("POWER", "Strength, or what runs the lights"),
+    ("PRIZE", "You win it"), ("PROUD", "Pleased with what you did"),
+    ("PUPPY", "A very new dog"), ("QUACK", "The noise a duck makes"),
+    ("QUICK", "Very fast"), ("QUIET", "Hardly a sound"),
+    ("RADIO", "You listen to it"), ("RAPID", "Very quick indeed"),
+    ("REACH", "Stretch out to get it"), ("READY", "All set to go"),
+    ("RIDGE", "Long narrow top of a hill"), ("RIGHT", "Not the left"),
+    ("ROAST", "Cook it in the oven"), ("ROBIN", "Little bird with a red front"),
+    ("ROUGH", "Not smooth"), ("ROUND", "Shaped like a ball"),
+    ("ROUTE", "The way you go"), ("ROYAL", "To do with kings and queens"),
+    ("SALAD", "A bowl of cold vegetables"), ("SANDY", "Covered in grains from the beach"),
+    ("SAUCE", "Pour it over your dinner"), ("SCALE", "It weighs you"),
+    ("SCARF", "Wrap it round your neck"), ("SCENE", "One part of a play"),
+    ("SCORE", "How many goals so far"), ("SCOUT", "Go and have a look ahead"),
+    ("SHACK", "A rough little hut"), ("SHADE", "Out of the sun"),
+    ("SHAPE", "Circle, square or triangle"), ("SHARE", "Give some to everyone"),
+    ("SHELF", "Board on the wall for books"), ("SHELL", "A snail carries one"),
+    ("SHINE", "Give off light"), ("SHINY", "It catches the light"),
+    ("SHIRT", "It has a collar and buttons"),
+    ("SHORE", "The edge of the lake"), ("SHORT", "Not tall"),
+    ("SHOUT", "Call out loudly"), ("SIGHT", "One of your five senses"),
+    ("SKIRT", "It goes round your waist"), ("SKULL", "The bone in your head"),
+    ("SLEEP", "What you do all night"), ("SLIDE", "Whoosh down it at the park"),
+    ("SLOPE", "Ground that tilts"), ("SMALL", "Not big"),
+    ("SMART", "Clever, or nicely dressed"), ("SMELL", "Use your nose"),
+    ("SMOKE", "Grey clouds from a fire"), ("SNACK", "A little something between meals"),
+    ("SNAIL", "Slow, with a shell"), ("SOLAR", "To do with the sun"),
+    ("SOLID", "Not liquid, not gas"), ("SOUND", "What your ears pick up"),
+    ("SOUTH", "The bottom of the map"), ("SPARK", "Tiny flash from a fire"),
+    ("SPEAK", "Say something"), ("SPEED", "How fast it goes"),
+    ("SPICE", "It makes food hot and tasty"), ("SPINE", "The bones down your back"),
+    ("SPOON", "You eat soup with it"), ("SPORT", "Football, tennis or swimming"),
+    ("SQUID", "Ten arms, no bones"), ("STACK", "A neat pile"),
+    ("STAGE", "Where the actors stand"), ("STAIR", "One step of many"),
+    ("STAMP", "It goes on a letter"), ("STAND", "Get up on your feet"),
+    ("STEAM", "Hot cloud off a kettle"), ("STEEP", "Very hard to climb"),
+    ("STICK", "A branch on the ground"), ("STOCK", "Everything the shop has"),
+    ("STOOL", "Seat with no back"), ("STORE", "Shop"),
+    ("STORY", "Once upon a time..."), ("STOVE", "You cook on it"),
+    ("STRAW", "You drink through it"), ("STUCK", "It will not move"),
+    ("SUNNY", "Not a cloud up there"),
+    ("SWEET", "Tastes of sugar"), ("SWIFT", "Very quick"),
+    ("SWING", "Push it at the playground"), ("SWORD", "A knight carries one"),
+    ("TABLE", "You eat your dinner at it"), ("TASTE", "Use your tongue"),
+    ("TEACH", "Show someone how"), ("TEETH", "You brush them"),
+    ("THICK", "Not thin"), ("THINK", "Use your brain"),
+    ("THIRD", "After first and second"), ("THORN", "The prickle on a rose"),
+    ("THREE", "Number after two"), ("THROW", "Send it through the air"),
+    ("TIGHT", "Not loose"), ("TIMER", "It counts down"),
+    ("TITLE", "The name of the book"), ("TODAY", "This very day"),
+    ("TOOTH", "One of the ones you brush"), ("TORCH", "Light you carry in the dark"),
+    ("TOTAL", "Everything added up"), ("TOWEL", "Dry yourself with it"),
+    ("TOWER", "Very tall and narrow"), ("TRACK", "The train runs on it"),
+    ("TRADE", "Swap one for another"), ("TRAIL", "A path through the woods"),
+    ("TREAT", "Something nice, now and then"), ("TRICK", "A clever bit of magic"),
+    ("TRUCK", "Big vehicle for carrying things"), ("TRUST", "Believe in someone"),
+    ("TRUTH", "The opposite of a fib"), ("TULIP", "Spring flower shaped like a cup"),
+    ("TWICE", "Two times"), ("TWIST", "Turn it round and round"),
+    ("UNCLE", "Your parent's brother"), ("UNDER", "Below"),
+    ("UNITE", "Come together"), ("UPPER", "The higher one"),
+    ("VALUE", "How much it is worth"), ("VIDEO", "A moving picture"),
+    ("VISIT", "Go and see someone"),
+    ("WAGON", "Cart pulled along"), ("WAIST", "The middle of you"),
+    ("WATER", "You drink it"),
+    ("WHEAT", "The crop that becomes bread"), ("WHEEL", "It goes round and round"),
+    ("WHILE", "For a bit of time"), ("WHITE", "The colour of snow"),
+    ("WHOLE", "All of it"), ("WIDTH", "How wide it is"),
+    ("WORLD", "The whole planet"), ("WORTH", "How much you would pay"),
+    ("WOUND", "Wrapped round and round"), ("WRIST", "Between hand and arm"),
+    ("WRITE", "Put it down on paper"), ("YOUNG", "Not old"),
+    ("YOUTH", "When you are still young"),
+
+    # --- more 6 letters ---
+    ("ANCHOR", "It holds the boat still"), ("ANSWER", "What a question needs"),
+    ("AUTUMN", "Season when leaves fall"), ("BALLET", "Dancing on your toes"),
+    ("BASKET", "Carry the shopping in it"), ("BEETLE", "Shiny insect, hard wings"),
+    ("BOTTLE", "You keep water in it"), ("BRIDGE", "It goes over the river"),
+    ("BUCKET", "Carry sand in it"), ("BUTTER", "Spread it on toast"),
+    ("CARPET", "Soft covering for the floor"), ("CARROT", "Long orange vegetable"),
+    ("CELLAR", "Room under the house"), ("CHERRY", "Small red fruit with a stone"),
+    ("CIRCLE", "Perfectly round shape"), ("CLEVER", "Quick at working things out"),
+    ("CLOUDY", "Sky full of grey"), ("COFFEE", "Grown-ups' morning drink"),
+    ("COLOUR", "Red, blue or green"), ("COOKIE", "Sweet round biscuit"),
+    ("COTTON", "Your shirt is made of it"), ("COUSIN", "Your aunt's child"),
+    ("CRAYON", "Wax stick for colouring"), ("DONKEY", "Long ears, and it brays"),
+    ("DRAGON", "It breathes fire in stories"), ("DRAWER", "Slides out of a desk"),
+    ("ENGINE", "It makes the car go"), ("ESCAPE", "Get away"),
+    ("FAMILY", "Parents, sisters and brothers"), ("FARMER", "Grows the crops"),
+    ("FINGER", "Five on each hand"), ("FLIGHT", "A journey by plane"),
+    ("FRIDGE", "Cold cupboard for the milk"), ("FRIEND", "Someone you like to be with"),
+    ("FROZEN", "Turned to ice"), ("GARAGE", "Where the car sleeps"),
+    ("GOLDEN", "The colour of a first-place medal"), ("HAMMER", "You bang nails with it"),
+    ("HAPPEN", "Take place"), ("HEIGHT", "How tall it is"),
+    ("HELMET", "Hard hat for a bike"), ("HOCKEY", "Sport with sticks"),
+    ("ICICLE", "Hanging spike of ice"), ("INSECT", "Six legs, often wings"),
+    ("JACKET", "A light coat"), ("JIGSAW", "Puzzle of little pieces"),
+    ("KITTEN", "Baby cat"), ("LADDER", "Climb its rungs"),
+    ("LAUNCH", "Send the rocket up"), ("LETTER", "It arrives in the post"),
+    ("LIQUID", "It pours"), ("LISTEN", "Use your ears"),
+    ("LIZARD", "Scaly, with four legs"), ("MAGNET", "It sticks to the fridge"),
+    ("MARBLE", "Little glass ball"), ("MEADOW", "Field full of wild flowers"),
+    ("MINUTE", "Sixty seconds"), ("MIRROR", "You see yourself in it"),
+    ("MOTHER", "Your mum"), ("MUSEUM", "Where the old things are kept"),
+    ("NEEDLE", "You sew with it"), ("PALACE", "Where a king lives"),
+    ("PEBBLE", "Small smooth stone"), ("PEPPER", "It makes you sneeze at dinner"),
+    ("PIRATE", "Sails a ship after treasure"), ("POTATO", "Mash it or chip it"),
+    ("PUDDLE", "Small pool after the rain"), ("PUPPET", "Toy worked with strings"),
+    ("PURPLE", "Colour between red and blue"), ("PUZZLE", "Something tricky to work out"),
+    ("RIBBON", "Tie it in a bow"), ("RIDDLE", "A question with a clever answer"),
+    ("SADDLE", "Seat on a horse"), ("SAFARI", "Trip to see wild animals"),
+    ("SALMON", "Pink fish that swims upstream"), ("SEASON", "Spring or summer, say"),
+    ("SHIELD", "A knight holds it"), ("SHOVEL", "Bigger than a spade"),
+    ("SIMPLE", "Very easy"), ("SISTER", "Your parents' daughter"),
+    ("SLEDGE", "Ride it down the snow"), ("SPIDER", "Eight legs and a web"),
+    ("SPONGE", "Soft and full of holes"), ("SQUARE", "Four equal sides"),
+    ("STREET", "Road with houses on it"), ("STRING", "Thin rope"),
+    ("SUNSET", "When the sky goes orange"), ("TENNIS", "Racquets and a yellow ball"),
+    ("THIRTY", "Three times ten"), ("TICKET", "You need one to get in"),
+    ("TOMATO", "Red, and goes in a salad"), ("TONGUE", "You taste with it"),
+    ("TURTLE", "It carries its house"), ("VALLEY", "Low land between hills"),
+    ("VIOLIN", "Play it with a bow"), ("WALNUT", "Nut with a wrinkly shell"),
+    ("WIZARD", "He waves a wand"), ("YELLOW", "The colour of a lemon"),
+
+    # --- more 7 letters ---
+    ("AIRPORT", "Where the planes take off"), ("ANOTHER", "One more"),
+    ("BALLOON", "Fill it with air and it floats"), ("BANDAGE", "Wrap it round a scrape"),
+    ("BEDROOM", "Where you sleep"), ("BICYCLE", "Two wheels and pedals"),
+    ("BROTHER", "Your parents' son"), ("CABBAGE", "Big leafy green vegetable"),
+    ("CAPTAIN", "Leader of the team"), ("CARAVAN", "House you tow behind a car"),
+    ("CEILING", "The floor above your head"), ("CHEETAH", "Fastest animal on land"),
+    ("CHICKEN", "It clucks"), ("COMPASS", "It always points north"),
+    ("COTTAGE", "Small country house"), ("CRICKET", "Bat, ball and wickets"),
+    ("CURTAIN", "Pull it across the window"), ("DIAMOND", "Hardest sparkling stone"),
+    ("EVENING", "After teatime"), ("FACTORY", "Where things get made"),
+    ("FANTASY", "A made-up world in a story"), ("GIRAFFE", "Tallest animal of all"),
+    ("HAMSTER", "Small pet with pouchy cheeks"), ("HARVEST", "Bringing in the crops"),
+    ("HOLIDAY", "No school for weeks"), ("JOURNEY", "A long trip"),
+    ("LANTERN", "A lamp you carry"), ("LIBRARY", "Where the books live"),
+    ("MACHINE", "It does the job for you"), ("MEASURE", "Find out how long it is"),
+    ("MUSTARD", "Yellow and spicy on a hot dog"), ("OCTOPUS", "Eight arms in the sea"),
+    ("ORCHARD", "Field full of fruit trees"), ("OSTRICH", "Huge bird that cannot fly"),
+    ("PACKAGE", "A parcel that arrives"), ("PANCAKE", "Flat, and flipped in a pan"),
+    ("PEACOCK", "It fans out its tail"), ("PICTURE", "A drawing or a photo"),
+    ("POPCORN", "It pops in the pan"), ("PUMPKIN", "Orange, and carved in October"),
+    ("SCIENCE", "Experiments and discovery"), ("STADIUM", "Where the big match happens"),
+    ("STATION", "Where the train stops"), ("TRACTOR", "Farm machine, huge wheels"),
+    ("VILLAGE", "Smaller than a town"), ("WEATHER", "Rain, sun or snow"),
+    ("WHISPER", "Talk very quietly"),
 ]
 
 CLUES = {w: c for w, c in WORDS}
@@ -381,43 +628,62 @@ CLUES = {w: c for w, c in WORDS}
 # shape that fills rather than to no puzzle at all.
 
 TEMPLATES = {
-    "easy": [
-        # zig - 100%. Eight entries, four of them four-letter. This replaced
-        # the plus below as the first choice: she finished that one too fast.
-        ["#....",
-         ".#...",
-         "..#..",
-         "...#.",
-         "....#"],
-        # cross - 100%. Only five entries, but every one is five letters, so
-        # it is more satisfying than a grid of three-letter gimmes.
-        ["..#..",
-         "..#..",
-         ".....",
-         "..#..",
-         "..#.."],
-        # plus - 100%. The gentlest shape, kept last as a safety net.
-        ["##.##",
-         "#...#",
-         ".....",
-         "#...#",
-         "##.##"],
-    ],
-    "hard": [
-        # banded - 100%. Five interlocking five-letter words, no short gimmes.
-        [".....",
-         "#.#.#",
-         ".....",
-         "#.#.#",
-         "....."],
-        # hshape - 100%. Four fives, crossing on one shared row.
-        [".#.#.",
-         ".#.#.",
-         ".....",
-         ".#.#.",
-         ".#.#."],
-    ],
+    "easy": {
+        # Both primaries are five entries of five letters each - promoted after
+        # "too easy" feedback. Longer words with simple clues beat a grid of
+        # three-letter gimmes. They rotate day to day so the shape varies.
+        "primary": [
+            # cross
+            ["..#..",
+             "..#..",
+             ".....",
+             "..#..",
+             "..#.."],
+            # banded
+            [".....",
+             "#.#.#",
+             ".....",
+             "#.#.#",
+             "....."],
+        ],
+        "fallback": [
+            # zig - staircase of 3s and 4s. Only if the above cannot fill.
+            ["#....",
+             ".#...",
+             "..#..",
+             "...#.",
+             "....#"],
+        ],
+    },
+    "hard": {
+        "primary": [
+            # openface - 8 entries, SEVEN of them five-letter, only two black
+            # squares. The densest grid the word list can support, and it only
+            # became possible once the bank grew from 314 words to 776; at the
+            # smaller size it measured 0%. Fills about 8 times in 10.
+            ["..#..",
+             ".....",
+             ".....",
+             ".....",
+             "..#.."],
+        ],
+        "fallback": [
+            # banded - five interlocking fives.
+            [".....",
+             "#.#.#",
+             ".....",
+             "#.#.#",
+             "....."],
+            # hshape - four fives on one shared row.
+            [".#.#.",
+             ".#.#.",
+             ".....",
+             ".#.#.",
+             ".#.#."],
+        ],
+    },
 }
+
 # "stairs" used to sit at the end of both lists on a measured 83% fill rate.
 # That number was wrong: it came from a probe that only asked whether the grid
 # filled, not whether the words it produced were real. Re-measured against the
@@ -567,11 +833,15 @@ def generate(day: date, level: str = "easy") -> dict | None:
     words = [w for w, _ in WORDS if len(w) <= size]
     by_len = _by_length(words)
 
-    # Rotate which shape is tried first, so the grid doesn't look identical
-    # every day, while still falling through to the others if one fails.
-    templates = TEMPLATES[level][:]
-    shift = day.toordinal() % len(templates)
-    templates = templates[shift:] + templates[:shift]
+    # Order matters: hardest first, easier shapes only as a fallback when the
+    # hard one cannot be filled. An earlier version rotated the whole list each
+    # day for visual variety, which quietly threw the difficulty ordering away
+    # - the "hard" level kept landing on its gentlest shape. Rotation now
+    # happens only among the PRIMARY shapes, which are equally difficult, so
+    # the grid still changes day to day without getting easier.
+    primary = TEMPLATES[level]["primary"]
+    shift = day.toordinal() % len(primary)
+    templates = primary[shift:] + primary[:shift] + TEMPLATES[level]["fallback"]
     for pattern in templates:
         slots = _slots(pattern)
         if not slots or _isolated(pattern, slots):
