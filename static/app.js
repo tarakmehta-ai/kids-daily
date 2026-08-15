@@ -280,9 +280,18 @@
 
     var btn = el("button", "reveal", "Show the answer");
     var ans = el("div", "answer");
-    ans.appendChild(el("div", "a", "Answer: " + dec(node.answer)));
-    if (node.solution) ans.appendChild(el("div", "s", dec(node.solution)));
+    // The answer is decoded ON FIRST CLICK, not at render time. It used to be
+    // written into the page immediately and merely hidden with display:none,
+    // which threw away the point of encoding it in the first place - Inspect
+    // Element showed it in plain text, and it would have appeared outright if
+    // the stylesheet ever failed to load.
+    var built = false;
     btn.addEventListener("click", function () {
+      if (!built) {
+        built = true;
+        ans.appendChild(el("div", "a", "Answer: " + dec(node.answer)));
+        if (node.solution) ans.appendChild(el("div", "s", dec(node.solution)));
+      }
       ans.classList.toggle("show");
       if (ans.classList.contains("show")) {
         TRACK.push({ type: "reveal", section: "s-brain", puzzle: title });
@@ -310,9 +319,11 @@
     var box = $("#joke");
     box.innerHTML = "";
     box.appendChild(el("div", "setup", j.setup || ""));
-    var p = el("div", "punch", dec(j.punchline));
+    var p = el("div", "punch");
     var b = el("button", "reveal", "Tell me!");
     b.addEventListener("click", function () {
+      // Decoded here rather than at render time - see puzzleCard.
+      p.textContent = dec(j.punchline);
       p.classList.add("show");
       b.style.display = "none";
       TRACK.push({ type: "joke_reveal", section: "s-joke" });
@@ -608,10 +619,16 @@
   var CN = { groups: [], tiles: [], selected: [], solved: [], mistakes: 0,
              done: false, hints: [] };
 
-  // A hint names the category of the easiest group still unsolved - it tells
-  // you WHAT you are looking for without telling you which four words. It only
-  // unlocks after a wrong guess, so it can't be used as a shortcut straight
-  // past the puzzle.
+  // A hint names one category, so you know WHAT to look for without being told
+  // which four words. It unlocks only after a wrong guess.
+  //
+  // It names the HARDEST unsolved group, not the easiest. Naming the easy one
+  // is not a hint at all - on a real board, "one group is TYPES OF TREES"
+  // hands over OAK, PINE, MAPLE and BIRCH in one tap, because for a plain
+  // category the name IS the answer. The tricky group is the one she is
+  // actually stuck on, and its name is a genuine nudge: knowing "one group is
+  // HIDDEN VEHICLE INSIDE" still leaves her to find CARPET, TRAINER, CABIN
+  // and VANISH among sixteen tiles.
   function cnHintable() {
     var out = [];
     for (var i = 0; i < CN.groups.length; i++) {
@@ -620,7 +637,7 @@
       out.push(i);
     }
     out.sort(function (a, b) {
-      return (CN.groups[a].difficulty || 1) - (CN.groups[b].difficulty || 1);
+      return (CN.groups[b].difficulty || 1) - (CN.groups[a].difficulty || 1);
     });
     return out;
   }
