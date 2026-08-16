@@ -629,9 +629,37 @@ CLUES = {w: c for w, c in WORDS}
 
 TEMPLATES = {
     "easy": {
-        # Both primaries are five entries of five letters each - promoted after
-        # "too easy" feedback. Longer words with simple clues beat a grid of
-        # three-letter gimmes. They rotate day to day so the shape varies.
+        # Stepped back down after "a little too hard". The all-five-letter
+        # grids below were too much; the old plus (four 3s, two 5s) was too
+        # little. "mirror" is the measured middle: ten entries, four of them
+        # five letters, six short ones to get a foothold. Fills 10 times in 12.
+        "primary": [
+            # mirror
+            ["...#.",
+             "...#.",
+             ".....",
+             ".#...",
+             ".#..."],
+            # plus - gentler, alternates with the above so the week varies
+            ["##.##",
+             "#...#",
+             ".....",
+             "#...#",
+             "##.##"],
+        ],
+        "fallback": [
+            # zig - staircase of 3s and 4s
+            ["#....",
+             ".#...",
+             "..#..",
+             "...#.",
+             "....#"],
+        ],
+    },
+    "hard": {
+        # Was "openface": 8 entries, seven of them five-letter. Too hard.
+        # These are five entries of five letters - still no three-letter
+        # gimmes, but a third less work.
         "primary": [
             # cross
             ["..#..",
@@ -647,39 +675,18 @@ TEMPLATES = {
              "....."],
         ],
         "fallback": [
-            # zig - staircase of 3s and 4s. Only if the above cannot fill.
-            ["#....",
-             ".#...",
-             "..#..",
-             "...#.",
-             "....#"],
-        ],
-    },
-    "hard": {
-        "primary": [
-            # openface - 8 entries, SEVEN of them five-letter, only two black
-            # squares. The densest grid the word list can support, and it only
-            # became possible once the bank grew from 314 words to 776; at the
-            # smaller size it measured 0%. Fills about 8 times in 10.
-            ["..#..",
-             ".....",
-             ".....",
-             ".....",
-             "..#.."],
-        ],
-        "fallback": [
-            # banded - five interlocking fives.
-            [".....",
-             "#.#.#",
-             ".....",
-             "#.#.#",
-             "....."],
-            # hshape - four fives on one shared row.
+            # hshape - four fives on one shared row
             [".#.#.",
              ".#.#.",
              ".....",
              ".#.#.",
              ".#.#."],
+            # openface - the dense one, now only if nothing else fills
+            ["..#..",
+             ".....",
+             ".....",
+             ".....",
+             "..#.."],
         ],
     },
 }

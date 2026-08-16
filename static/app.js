@@ -659,9 +659,9 @@
     if (CN.done) { btn.style.display = "none"; return; }
     btn.style.display = "";
     var left = cnHintable().length;
-    if (CN.mistakes < 1) {
+    if (!cnTried()) {
       btn.disabled = true;
-      btn.textContent = "Hint unlocks after a wrong guess";
+      btn.textContent = "Hint unlocks after your first guess";
     } else if (!left) {
       btn.disabled = true;
       btn.textContent = "No more hints";
@@ -671,8 +671,17 @@
     }
   }
 
+  // Any submitted guess counts, right or wrong. Gating on a WRONG guess sounds
+  // reasonable and is wrong in practice: a careful child who does not want to
+  // spend one of her four lives never unlocks it, so the button sits greyed out
+  // exactly when she is most stuck. She still has to attempt something first,
+  // so it is not a free pass past the puzzle.
+  function cnTried() {
+    return CN.mistakes > 0 || CN.solved.length > 0;
+  }
+
   function cnHint() {
-    if (CN.done || CN.mistakes < 1) return;
+    if (CN.done || !cnTried()) return;
     var next = cnHintable()[0];
     if (next === undefined) return;
     CN.hints.push(next);
